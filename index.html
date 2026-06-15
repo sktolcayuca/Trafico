@@ -3,484 +3,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard OTIF - Tráfico SK</title>
+    <title>Dashboard OTIF SK</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: #f5f5f5;
-            color: #333;
-            padding: 20px;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            text-align: center;
-        }
-        
-        .header h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
-        }
-        
-        .header p {
-            opacity: 0.9;
-            font-size: 14px;
-        }
-        
-        .filters {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        
-        select, input {
-            padding: 10px 15px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-        
-        button {
-            padding: 10px 20px;
-            background: #667eea;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-left: 10px;
-        }
-        
-        button:hover {
-            background: #5568d3;
-        }
-        
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .kpi-card {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            border-left: 4px solid #667eea;
-        }
-        
-        .kpi-label {
-            font-size: 11px;
-            text-transform: uppercase;
-            color: #999;
-            margin-bottom: 5px;
-        }
-        
-        .kpi-value {
-            font-size: 28px;
-            font-weight: bold;
-            color: #333;
-        }
-        
-        .kpi-subtext {
-            font-size: 11px;
-            color: #999;
-            margin-top: 5px;
-        }
-        
-        .traffic-light {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 12px;
-            margin-top: 8px;
-        }
-        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI'; background: #f5f5f5; padding: 15px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 15px; text-align: center; }
+        .header h1 { font-size: 24px; margin-bottom: 5px; }
+        .header p { font-size: 12px; opacity: 0.9; }
+        .container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .panel { display: flex; flex-direction: column; gap: 12px; }
+        .panel-header { background: white; padding: 15px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid; }
+        .panel-header.hoy { border-left-color: #4caf50; }
+        .panel-header.manana { border-left-color: #2196f3; }
+        .panel-header h2 { font-size: 16px; margin-bottom: 3px; }
+        .panel-header p { font-size: 11px; color: #999; }
+        .kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .kpi { background: white; padding: 12px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .kpi-label { font-size: 10px; color: #999; text-transform: uppercase; }
+        .kpi-value { font-size: 20px; font-weight: bold; margin: 3px 0; }
+        .traffic { width: 25px; height: 25px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 10px; font-weight: bold; margin-top: 5px; }
         .traffic-green { background: #4caf50; }
         .traffic-orange { background: #ff9800; }
         .traffic-red { background: #f44336; }
-        
-        .charts-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .chart-container {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            height: 350px;
-        }
-        
-        .chart-title {
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #333;
-        }
-        
-        .table-container {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            overflow-x: auto;
-            max-height: 600px;
-            overflow-y: auto;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12px;
-        }
-        
-        th {
-            background: #f5f5f5;
-            padding: 10px;
-            text-align: left;
-            font-weight: 600;
-            border-bottom: 2px solid #ddd;
-            position: sticky;
-            top: 0;
-        }
-        
-        td {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        tr:hover {
-            background: #f9f9f9;
-        }
-        
-        .status-badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-        
-        .status-enviado { background: #c8e6c9; color: #2e7d32; }
-        .status-pendiente { background: #ffe0b2; color: #e65100; }
-        .status-entregado { background: #a5d6a7; color: #1b5e20; }
-        .otif-ok { background: #4caf50; color: white; }
-        .otif-fail { background: #f44336; color: white; }
-        
-        .loading {
-            text-align: center;
-            padding: 30px;
-            font-size: 16px;
-            color: #666;
-        }
-        
-        .error {
-            background: #ffebee;
-            color: #c62828;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-            font-size: 13px;
-        }
-        
-        .last-update {
-            font-size: 11px;
-            color: #999;
-            margin-top: 10px;
-        }
+        .chart { background: white; padding: 12px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); height: 250px; }
+        .chart-title { font-size: 13px; font-weight: bold; margin-bottom: 8px; }
+        .table { background: white; padding: 12px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow-x: auto; max-height: 300px; overflow-y: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        th { background: #f5f5f5; padding: 6px; text-align: left; font-weight: 600; border-bottom: 1px solid #ddd; position: sticky; top: 0; }
+        td { padding: 6px; border-bottom: 1px solid #eee; }
+        tr:hover { background: #f9f9f9; }
+        .badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; }
+        .ok { background: #4caf50; color: white; }
+        .fail { background: #f44336; color: white; }
+        .pending { background: #ffe0b2; }
+        .sent { background: #c8e6c9; }
+        .info { background: #fff3cd; padding: 8px; border-radius: 4px; font-size: 11px; margin: 8px 0; }
+        @media (max-width: 1000px) { .container { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>📊 Dashboard OTIF - Tráfico SK</h1>
-        <p>Histórico de entregas | Actualización automática cada 2 minutos</p>
+        <p>Izquierda: HOY | Derecha: MAÑANA</p>
     </div>
     
-    <div id="error-container"></div>
-    
-    <div class="filters">
-        <label>Filtrar por Estatus:</label>
-        <select id="filterStatus" onchange="loadData()">
-            <option value="">Todos</option>
-            <option value="ENVIADO">Enviado</option>
-            <option value="PENDIENTE">Pendiente</option>
-            <option value="ENTREGADO">Entregado</option>
-        </select>
-        <button onclick="loadData()">🔄 Actualizar</button>
-    </div>
-    
-    <div class="kpi-grid" id="kpiGrid">
-        <div class="loading">Cargando...</div>
-    </div>
-    
-    <div class="charts-grid">
-        <div class="chart-container">
-            <div class="chart-title">OTIF Status</div>
-            <canvas id="otifChart"></canvas>
+    <div class="container">
+        <!-- HOY -->
+        <div class="panel">
+            <div class="panel-header hoy">
+                <h2>📅 HOY</h2>
+                <p id="dateHoy"></p>
+            </div>
+            <div id="infoHoy" class="info"></div>
+            <div class="kpi-grid" id="kpiHoy"></div>
+            <div class="chart">
+                <div class="chart-title">OTIF</div>
+                <canvas id="chartHoy"></canvas>
+            </div>
+            <div class="table">
+                <table id="tableHoy">
+                    <thead><tr><th>Pedido</th><th>Cliente</th><th>Est.</th><th>OTIF</th></tr></thead>
+                    <tbody id="bodyHoy"></tbody>
+                </table>
+            </div>
         </div>
-        <div class="chart-container">
-            <div class="chart-title">Causas de Cambio</div>
-            <canvas id="causaChart"></canvas>
+        
+        <!-- MAÑANA -->
+        <div class="panel">
+            <div class="panel-header manana">
+                <h2>📅 MAÑANA</h2>
+                <p id="dateManana"></p>
+            </div>
+            <div id="infoManana" class="info"></div>
+            <div class="kpi-grid" id="kpiManana"></div>
+            <div class="chart">
+                <div class="chart-title">OTIF</div>
+                <canvas id="chartManana"></canvas>
+            </div>
+            <div class="table">
+                <table id="tableManana">
+                    <thead><tr><th>Pedido</th><th>Cliente</th><th>Est.</th><th>OTIF</th></tr></thead>
+                    <tbody id="bodyManana"></tbody>
+                </table>
+            </div>
         </div>
     </div>
-    
-    <div class="table-container">
-        <div class="chart-title">Listado de Entregas</div>
-        <table id="dataTable">
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Pedido</th>
-                    <th>Cliente</th>
-                    <th>Piezas</th>
-                    <th>Peso</th>
-                    <th>Entrg.</th>
-                    <th>Est.</th>
-                    <th>OTIF</th>
-                    <th>Causa</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                <tr><td colspan="9" class="loading">Cargando...</td></tr>
-            </tbody>
-        </table>
-        <div class="last-update" id="lastUpdate"></div>
-    </div>
-    
+
     <script>
-    let chartOtif = null;
-    let chartCausa = null;
-    
     const SHEET_ID = '1E5m71oNT1dTU4GDzhj4fXTobRt3t35nEFhnKsQCtAJ8';
-    const GID_HISTORICO = '192857481';
-    const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID_HISTORICO}`;
+    const GID = '192857481';
+    const CSV = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
     
-    function parseDate(dateStr) {
-        if (!dateStr) return null;
-        dateStr = dateStr.toString().trim();
-        const parts = dateStr.split('/');
-        if (parts.length === 3) {
-            let day = parseInt(parts[0]);
-            let month = parseInt(parts[1]);
-            let year = parseInt(parts[2]);
-            if (year < 100) year += 2000;
-            return new Date(year, month - 1, day);
-        }
-        return null;
+    let ch1, ch2;
+    
+    function getToday() {
+        const d = new Date();
+        return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
     }
     
-    function calculateOTIF(fechaLista, fechaEntrega) {
-        const lista = parseDate(fechaLista);
-        const entrega = parseDate(fechaEntrega);
-        if (!lista || !entrega) return null;
-        return entrega <= lista ? 'OK' : 'FAIL';
+    function getTomorrow() {
+        const d = new Date();
+        d.setDate(d.getDate()+1);
+        return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
     }
     
-    async function loadCsvData(csvUrl) {
+    function formatDate(s) {
+        const [day, month, year] = s.split('/');
+        const d = new Date(year, month-1, day);
+        return d.toLocaleDateString('es-MX', {weekday: 'short', month: 'short', day: 'numeric'});
+    }
+    
+    async function load() {
         try {
-            const response = await fetch(csvUrl);
-            const text = await response.text();
-            const rows = text.split('\n').map(row => {
-                const cells = [];
-                let current = '';
-                let inQuotes = false;
-                for (let i = 0; i < row.length; i++) {
-                    const char = row[i];
-                    if (char === '"') {
-                        inQuotes = !inQuotes;
-                    } else if (char === ',' && !inQuotes) {
-                        cells.push(current.trim());
-                        current = '';
-                    } else {
-                        current += char;
-                    }
-                }
-                cells.push(current.trim());
-                return cells;
+            const r = await fetch(CSV);
+            const t = await r.text();
+            const rows = t.split('\n').filter(x => x.trim());
+            
+            if (rows.length < 2) return;
+            
+            const headers = rows[0].split(',').map(x => x.trim().replace(/"/g, ''));
+            const data = rows.slice(1).map(row => {
+                const cells = row.split(',');
+                const obj = {};
+                headers.forEach((h, i) => obj[h] = (cells[i] || '').replace(/"/g, '').trim());
+                return obj;
             });
             
-            if (rows.length < 2) return [];
+            const today = getToday();
+            const tomorrow = getTomorrow();
             
-            const headers = rows[0].map(h => h.replace(/"/g, ''));
-            const data = [];
+            document.getElementById('dateHoy').textContent = formatDate(today);
+            document.getElementById('dateManana').textContent = formatDate(tomorrow);
             
-            for (let i = 1; i < rows.length; i++) {
-                if (rows[i].join('').trim() === '') continue;
-                const row = {};
-                for (let j = 0; j < headers.length; j++) {
-                    row[headers[j]] = rows[i][j] ? rows[i][j].replace(/"/g, '') : '';
-                }
-                data.push(row);
-            }
-            return data;
-        } catch (error) {
-            console.error('Error:', error);
-            return [];
-        }
+            const dHoy = data.filter(x => {
+                const f = (x['FECHA DE'] || '').split('/');
+                return f[0] === today.split('/')[0] && f[1] === today.split('/')[1];
+            });
+            
+            const dMan = data.filter(x => {
+                const f = (x['FECHA DE'] || '').split('/');
+                return f[0] === tomorrow.split('/')[0] && f[1] === tomorrow.split('/')[1];
+            });
+            
+            render('Hoy', dHoy);
+            render('Manana', dMan);
+            
+        } catch(e) { console.error(e); }
     }
     
-    async function loadData() {
-        const data = await loadCsvData(CSV_URL);
+    function calcOTIF(fLista, fEnt) {
+        const p = (s) => {
+            const [d,m,y] = s.split('/');
+            return new Date(y, m-1, d);
+        };
+        const l = p(fLista || '');
+        const e = p(fEnt || '');
+        if (!l || !e) return null;
+        return e <= l ? 'OK' : 'FAIL';
+    }
+    
+    function render(side, data) {
+        const sid = side === 'Hoy' ? 'Hoy' : 'Manana';
         
         if (data.length === 0) {
-            document.getElementById('tableBody').innerHTML = '<tr><td colspan="9" class="loading">Sin datos</td></tr>';
+            document.getElementById(`info${sid}`).innerHTML = '✓ Sin entregas';
+            document.getElementById(`kpi${sid}`).innerHTML = '<div class="kpi"><div class="kpi-label">Pedidos</div><div class="kpi-value">0</div></div>';
+            document.getElementById(`body${sid}`).innerHTML = '<tr><td colspan="4">-</td></tr>';
             return;
         }
         
-        const filterStatus = document.getElementById('filterStatus').value;
-        const filtered = filterStatus 
-            ? data.filter(row => row['ESTATUS']?.toUpperCase().includes(filterStatus))
-            : data;
+        const total = data.length;
+        const ok = data.filter(x => calcOTIF(x['Fecha nueva'] || x['FECHA DE LISTA'], x['FECHA DE']) === 'OK').length;
+        const pct = Math.round(ok/total*100);
         
-        if (filtered.length === 0) {
-            document.getElementById('tableBody').innerHTML = '<tr><td colspan="9" class="loading">No hay datos para este filtro</td></tr>';
-            return;
-        }
+        let traf = 'traffic-red';
+        if (pct >= 95) traf = 'traffic-green';
+        else if (pct >= 90) traf = 'traffic-orange';
         
-        // KPIs
-        const total = filtered.length;
-        const entregados = filtered.filter(r => r['ESTATUS']?.toUpperCase().includes('ENTREGADO')).length;
-        const otifOK = filtered.filter(r => calculateOTIF(r['Fecha nueva'] || r['FECHA DE LISTA'], r['FECHA DE']) === 'OK').length;
-        const otifPercent = total > 0 ? Math.round((otifOK / total) * 100) : 0;
-        
-        let trafficClass = 'traffic-red';
-        if (otifPercent >= 95) trafficClass = 'traffic-green';
-        else if (otifPercent >= 90) trafficClass = 'traffic-orange';
-        
-        document.getElementById('kpiGrid').innerHTML = `
-            <div class="kpi-card">
-                <div class="kpi-label">Total</div>
-                <div class="kpi-value">${total}</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Entregados</div>
-                <div class="kpi-value">${entregados}</div>
-                <div class="kpi-subtext">${((entregados/total)*100).toFixed(0)}%</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">OTIF</div>
-                <div class="kpi-value">${otifPercent}%</div>
-                <div class="traffic-light ${trafficClass}">${otifPercent >= 95 ? '✅' : otifPercent >= 90 ? '⚠️' : '❌'}</div>
-            </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Retrasos</div>
-                <div class="kpi-value">${total - otifOK}</div>
-            </div>
+        document.getElementById(`kpi${sid}`).innerHTML = `
+            <div class="kpi"><div class="kpi-label">Pedidos</div><div class="kpi-value">${total}</div></div>
+            <div class="kpi"><div class="kpi-label">OTIF</div><div class="kpi-value">${pct}%</div><div class="traffic ${traf}">${pct>=95?'✅':pct>=90?'⚠️':'❌'}</div></div>
         `;
         
-        // Table
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = filtered.map(row => {
-            const fechaLista = row['Fecha nueva'] || row['FECHA DE LISTA'];
-            const fechaEntrega = row['FECHA DE'];
-            const otif = calculateOTIF(fechaLista, fechaEntrega);
-            const estatus = row['ESTATUS']?.toUpperCase() || '';
-            
-            let estatusClass = 'status-pendiente';
-            if (estatus.includes('ENTREGADO')) estatusClass = 'status-entregado';
-            else if (estatus.includes('ENVIADO')) estatusClass = 'status-enviado';
-            
-            return `
-                <tr>
-                    <td>${row['FECHA DE LISTA'] || '-'}</td>
-                    <td><strong>${row['PEDIDO'] || '-'}</strong></td>
-                    <td>${row['CLIENTE'] ? row['CLIENTE'].substring(0, 12) : '-'}</td>
-                    <td>${row['PIEZAS'] || '-'}</td>
-                    <td>${row['PESO'] || '-'}</td>
-                    <td>${fechaEntrega || '-'}</td>
-                    <td><span class="status-badge ${estatusClass}">${estatus.substring(0, 3)}</span></td>
-                    <td><span class="status-badge ${otif === 'OK' ? 'otif-ok' : 'otif-fail'}">${otif === 'OK' ? '✅' : '❌'}</span></td>
-                    <td>${row['Causa del c'] || '-'}</td>
-                </tr>
-            `;
+        document.getElementById(`body${sid}`).innerHTML = data.map(x => {
+            const otif = calcOTIF(x['Fecha nueva'] || x['FECHA DE LISTA'], x['FECHA DE']);
+            const est = (x['ESTATUS'] || '').toUpperCase();
+            return `<tr>
+                <td><strong>${x['PEDIDO']||'-'}</strong></td>
+                <td>${(x['CLIENTE']||'-').substring(0,12)}</td>
+                <td><span class="badge ${est.includes('ENTREGADO')?'sent':est.includes('ENVIADO')?'ok':'pending'}">${est.substring(0,3)}</span></td>
+                <td><span class="badge ${otif==='OK'?'ok':'fail'}">${otif==='OK'?'✅':'❌'}</span></td>
+            </tr>`;
         }).join('');
         
-        // Charts
-        renderCharts(filtered);
+        const ctx = document.getElementById(`chart${sid}`).getContext('2d');
+        if (side === 'Hoy' && ch1) ch1.destroy();
+        if (side === 'Manana' && ch2) ch2.destroy();
         
-        document.getElementById('lastUpdate').textContent = `Actualizado: ${new Date().toLocaleTimeString('es-MX')}`;
-    }
-    
-    function renderCharts(data) {
-        // OTIF Chart
-        const otifCounts = { 'OK': 0, 'FAIL': 0 };
-        data.forEach(row => {
-            const otif = calculateOTIF(row['Fecha nueva'] || row['FECHA DE LISTA'], row['FECHA DE']);
-            if (otif === 'OK') otifCounts['OK']++;
-            else otifCounts['FAIL']++;
-        });
-        
-        const ctx1 = document.getElementById('otifChart').getContext('2d');
-        if (chartOtif) chartOtif.destroy();
-        chartOtif = new Chart(ctx1, {
+        const ch = new Chart(ctx, {
             type: 'doughnut',
             data: {
                 labels: ['OK', 'FAIL'],
-                datasets: [{
-                    data: [otifCounts['OK'], otifCounts['FAIL']],
-                    backgroundColor: ['#4caf50', '#f44336']
-                }]
+                datasets: [{data: [ok, total-ok], backgroundColor: ['#4caf50', '#f44336']}]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } }
-            }
+            options: {responsive: true, maintainAspectRatio: false, plugins: {legend: {position: 'bottom', labels: {font: {size: 10}}}}}
         });
         
-        // Causa Chart
-        const causaCounts = {};
-        data.forEach(row => {
-            const causa = row['Causa del c'] || 'Sin causa';
-            causaCounts[causa] = (causaCounts[causa] || 0) + 1;
-        });
-        
-        const ctx2 = document.getElementById('causaChart').getContext('2d');
-        if (chartCausa) chartCausa.destroy();
-        chartCausa = new Chart(ctx2, {
-            type: 'bar',
-            data: {
-                labels: Object.keys(causaCounts),
-                datasets: [{
-                    label: 'Cantidad',
-                    data: Object.values(causaCounts),
-                    backgroundColor: '#667eea'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } }
-            }
-        });
+        if (side === 'Hoy') ch1 = ch;
+        else ch2 = ch;
     }
     
-    loadData();
-    setInterval(loadData, 120000);
+    load();
+    setInterval(load, 120000);
     </script>
 </body>
 </html>
