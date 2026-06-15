@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard OTIF - Tráfico SK</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        select, input {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .kpi-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+        }
+        
+        .kpi-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+        
+        .kpi-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .kpi-subtext {
+            font-size: 12px;
+            color: #999;
+            margin-top: 8px;
+        }
+        
+        .otif-traffic {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-top: 15px;
+        }
+        
+        .traffic-light {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .traffic-green {
+            background: #4caf50;
+        }
+        
+        .traffic-orange {
+            background: #ff9800;
+        }
+        
+        .traffic-red {
+            background: #f44336;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+            height: 400px;
+        }
+        
+        .chart-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .table-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow-x: auto;
+            margin-bottom: 30px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        
+        th {
+            background: #f5f5f5;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #ddd;
+            color: #333;
+        }
+        
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        tr:hover {
+            background: #f9f9f9;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .status-enviado {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+        
+        .status-pendiente {
+            background: #ffe0b2;
+            color: #e65100;
+        }
+        
+        .status-entregado {
+            background: #a5d6a7;
+            color: #1b5e20;
+        }
+        
+        .otif-ok {
+            background: #4caf50;
+            color: white;
+        }
+        
+        .otif-fail {
+            background: #f44336;
+            color: white;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 16px;
+            color: #666;
+        }
+        
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        
+        .last-update {
+            font-size: 12px;
+            color: #999;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Dashboard OTIF - Tráfico SK</h1>
+            <p>Seguimiento de entregas vs compromisos | Actualización automática cada 2 minutos</p>
+        </div>
+        
+        <div id="error-container"></div>
+        
+        <div class="filters">
+            <div class="filter-group">
+                <label>Filtrar por Estatus:</label>
+                <select id="filterStatus">
+                    <option value="">Todos</option>
+                    <option value="ENVIADO">Enviado</option>
+                    <option value="PENDIENTE">Pendiente</option>
+                    <option value="ENTREGADO">Entregado</option>
+                </select>
+            </div>
+            <button onclick="location.reload()">🔄 Actualizar Datos</button>
+        </div>
+        
+        <div class="kpi-grid" id="kpiGrid">
+            <div class="loading">Cargando datos...</div>
+        </div>
+        
+        <div class="charts-grid">
+            <div class="chart-container">
+                <div class="chart-title">OTIF por Estatus</div>
+                <canvas id="otifStatusChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <div class="chart-title">Entregas por Causa de Cambio</div>
+                <canvas id="causaChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <div class="chart-title">Listado Detallado de Entregas</div>
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th>Fecha Lista</th>
+                        <th>Pedido</th>
+                        <th>Cliente</th>
+                        <th>Piezas</th>
+                        <th>Peso (kg)</th>
+                        <th>Fecha Entrega</th>
+                        <th>Estatus</th>
+                        <th>OTIF</th>
+                        <th>Causa Cambio</th>
+                        <th>Días Retraso</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr><td colspan="10" class="loading">Cargando datos...</td></tr>
+                </tbody>
+            </table>
+            <div class="last-update" id="lastUpdate"></div>
+        </div>
+    </div>
+    
+    let chartOtifStatus = null;
+    let chartCausa = null;
+    const SHEET_ID = '1E5m71oNT1dTU4GDzhj4fXTobRt3t35nEFhnKsQCtAJ8';
+    const GID_HISTORICO = '192857481';
+    
+    const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID_HISTORICO}`;
+    
+    function parseDate(dateStr) {
+        if (!dateStr) return null;
+        dateStr = dateStr.toString().trim();
+        const parts = dateStr.split('/');
+        if (parts.length === 3) {
+            let day = parseInt(parts[0]);
+            let month = parseInt(parts[1]);
+            let year = parseInt(parts[2]);
+            if (year < 100) year += 2000;
+            return new Date(year, month - 1, day);
+        }
+        return null;
+    }
+    
+    function calculateOTIF(fechaLista, fechaEntrega) {
+        const lista = parseDate(fechaLista);
+        const entrega = parseDate(fechaEntrega);
+        if (!lista || !entrega) return null;
+        return entrega <= lista ? 'OK' : 'FAIL';
+    }
+    
+    function calculateDiasRetraso(fechaLista, fechaEntrega) {
+        const lista = parseDate(fechaLista);
+        const entrega = parseDate(fechaEntrega);
+        if (!lista || !entrega) return 0;
+        const diffTime = entrega - lista;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays;
+    }
+    
+    async function loadData() {
+        try {
+            const response = await fetch(CSV_URL);
+            const text = await response.text();
+            const rows = text.split('\n').map(row => {
+                const cells = [];
+                let current = '';
+                let inQuotes = false;
+                for (let i = 0; i < row.length; i++) {
+                    const char = row[i];
+                    if (char === '"') {
+                        inQuotes = !inQuotes;
+                    } else if (char === ',' && !inQuotes) {
+                        cells.push(current.trim());
+                        current = '';
+                    } else {
+                        current += char;
+                    }
+                }
+                cells.push(current.trim());
+                return cells;
+            });
+            
+            if (rows.length < 2) {
+                showError('No hay datos disponibles en el sheet');
+                return;
+            }
+            
+            const headers = rows[0].map(h => h.replace(/"/g, ''));
+            const data = [];
+            
+            for (let i = 1; i < rows.length; i++) {
+                if (rows[i].join('').trim() === '') continue;
+                const row = {};
+                for (let j = 0; j < headers.length; j++) {
+                    row[headers[j]] = rows[i][j] ? rows[i][j].replace(/"/g, '') : '';
+                }
+                data.push(row);
+            }
+            
+            renderDashboard(data);
+            document.getElementById('lastUpdate').textContent = `Última actualización: ${new Date().toLocaleString('es-MX')}`;
+        } catch (error) {
+            showError('Error cargando datos: ' + error.message);
+            console.error(error);
+        }
+    }
+    
+    function showError(msg) {
+        document.getElementById('error-container').innerHTML = `<div class="error">⚠️ ${msg}</div>`;
+    }
+    
+    function renderDashboard(allData) {
+        const filterStatus = document.getElementById('filterStatus').value;
+        const data = filterStatus 
+            ? allData.filter(row => row['ESTATUS']?.toUpperCase().includes(filterStatus))
+            : allData;
+        
+        if (data.length === 0) {
+            document.getElementById('tableBody').innerHTML = '<tr><td colspan="10">No hay datos para este filtro</td></tr>';
+            return;
+        }
+        
+        // KPIs
+        const total = data.length;
+        const entregados = data.filter(r => r['ESTATUS']?.toUpperCase().includes('ENTREGADO')).length;
+        const otifOK = data.filter(r => calculateOTIF(r['Fecha nueva'] || r['FECHA DE LISTA'], r['FECHA DE']) === 'OK').length;
+        const otifPercent = total > 0 ? Math.round((otifOK / total) * 100) : 0;
+        
+        // Traffic light
+        let trafficClass = 'traffic-red';
+        if (otifPercent >= 95) trafficClass = 'traffic-green';
+        else if (otifPercent >= 90) trafficClass = 'traffic-orange';
+        
+        document.getElementById('kpiGrid').innerHTML = `
+            <div class="kpi-card">
+                <div class="kpi-label">Total Pedidos</div>
+                <div class="kpi-value">${total}</div>
+                <div class="kpi-subtext">En el período</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Entregados</div>
+                <div class="kpi-value">${entregados}</div>
+                <div class="kpi-subtext">${((entregados/total)*100).toFixed(1)}% completado</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">OTIF (%)</div>
+                <div class="kpi-value">${otifPercent}%</div>
+                <div class="otif-traffic">
+                    <div class="traffic-light ${trafficClass}">${otifOK}/${total}</div>
+                    <div class="kpi-subtext">
+                        ${otifPercent >= 95 ? '✅ Excelente' : otifPercent >= 90 ? '⚠️ Bueno' : '❌ Crítico'}
+                    </div>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Retrasos</div>
+                <div class="kpi-value">${total - otifOK}</div>
+                <div class="kpi-subtext">${((1 - otifOK/total)*100).toFixed(1)}% con falta OTIF</div>
+            </div>
+        `;
+        
+        // Charts
+        renderCharts(data);
+        
+        // Table
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = data.map(row => {
+            const fechaLista = row['Fecha nueva'] || row['FECHA DE LISTA'];
+            const fechaEntrega = row['FECHA DE'];
+            const otif = calculateOTIF(fechaLista, fechaEntrega);
+            const diasRetraso = calculateDiasRetraso(fechaLista, fechaEntrega);
+            const estatus = row['ESTATUS']?.toUpperCase() || '';
+            
+            let estatusClass = 'status-pendiente';
+            if (estatus.includes('ENTREGADO')) estatusClass = 'status-entregado';
+            else if (estatus.includes('ENVIADO')) estatusClass = 'status-enviado';
+            
+            return `
+                <tr>
+                    <td>${fechaLista}</td>
+                    <td><strong>${row['PEDIDO'] || '-'}</strong></td>
+                    <td>${row['CLIENTE'] || '-'}</td>
+                    <td>${row['PIEZAS'] || '-'}</td>
+                    <td>${row['PESO'] || '-'}</td>
+                    <td>${fechaEntrega || '-'}</td>
+                    <td><span class="status-badge ${estatusClass}">${estatus || '-'}</span></td>
+                    <td><span class="status-badge ${otif === 'OK' ? 'otif-ok' : 'otif-fail'}">${otif === 'OK' ? '✅ OK' : '❌ FAIL'}</span></td>
+                    <td>${row['Causa del c'] || '-'}</td>
+                    <td>${diasRetraso} día${diasRetraso !== 1 ? 's' : ''}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+    
+    function renderCharts(data) {
+        // OTIF por Estatus
+        const statusOtif = {};
+        data.forEach(row => {
+            const estatus = row['ESTATUS']?.toUpperCase() || 'DESCONOCIDO';
+            if (!statusOtif[estatus]) statusOtif[estatus] = { ok: 0, fail: 0 };
+            const otif = calculateOTIF(row['Fecha nueva'] || row['FECHA DE LISTA'], row['FECHA DE']);
+            if (otif === 'OK') statusOtif[estatus].ok++;
+            else statusOtif[estatus].fail++;
+        });
+        
+        const statusLabels = Object.keys(statusOtif);
+        const statusOkData = statusLabels.map(s => statusOtif[s].ok);
+        const statusFailData = statusLabels.map(s => statusOtif[s].fail);
+        
+        const ctxStatus = document.getElementById('otifStatusChart').getContext('2d');
+        if (chartOtifStatus) chartOtifStatus.destroy();
+        chartOtifStatus = new Chart(ctxStatus, {
+            type: 'bar',
+            data: {
+                labels: statusLabels,
+                datasets: [
+                    {
+                        label: 'OTIF OK',
+                        data: statusOkData,
+                        backgroundColor: '#4caf50'
+                    },
+                    {
+                        label: 'OTIF FAIL',
+                        data: statusFailData,
+                        backgroundColor: '#f44336'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+        
+        // Causa de Cambio
+        const causaCounts = {};
+        data.forEach(row => {
+            const causa = row['Causa del c'] || 'Sin causa';
+            causaCounts[causa] = (causaCounts[causa] || 0) + 1;
+        });
+        
+        const causaLabels = Object.keys(causaCounts);
+        const causaData = causaLabels.map(c => causaCounts[c]);
+        
+        const ctxCausa = document.getElementById('causaChart').getContext('2d');
+        if (chartCausa) chartCausa.destroy();
+        chartCausa = new Chart(ctxCausa, {
+            type: 'doughnut',
+            data: {
+                labels: causaLabels,
+                datasets: [{
+                    data: causaData,
+                    backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#00f2fe', '#ff6b6b', '#ffa502']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    }
+    
+    document.getElementById('filterStatus').addEventListener('change', () => {
+        loadData();
+    });
+    
+    // Cargar datos al iniciar
+    loadData();
+    
+    // Auto-refresh cada 2 minutos
+    setInterval(loadData, 120000);
+    </script>
+</body>
+</html>
