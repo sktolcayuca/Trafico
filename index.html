@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard OTIF - Tráfico SK</title>
+    <title>Dashboard OTIF - Hoy vs Mañana</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
         * {
@@ -19,18 +19,14 @@
             padding: 20px;
         }
         
-        .container {
-            max-width: 1600px;
-            margin: 0 auto;
-        }
-        
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 30px;
             border-radius: 8px;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
         }
         
         .header h1 {
@@ -43,158 +39,171 @@
             font-size: 14px;
         }
         
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        
+        .panel {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .panel-header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid;
+        }
+        
+        .panel-header.hoy {
+            border-left-color: #4caf50;
+        }
+        
+        .panel-header.manana {
+            border-left-color: #2196f3;
+        }
+        
+        .panel-header h2 {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+        
+        .panel-header p {
+            font-size: 12px;
+            color: #999;
+        }
+        
         .filters {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
-        .filter-group {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-        
-        select, input {
-            padding: 10px 15px;
+        select {
+            padding: 8px 12px;
             border: 1px solid #ddd;
             border-radius: 6px;
-            font-size: 14px;
+            font-size: 13px;
         }
         
         button {
-            padding: 10px 20px;
+            padding: 8px 16px;
             background: #667eea;
             color: white;
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
+            font-size: 13px;
+            margin-left: 10px;
         }
         
         button:hover {
             background: #5568d3;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
         }
         
         .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
         }
         
         .kpi-card {
             background: white;
-            padding: 20px;
+            padding: 15px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             border-left: 4px solid #667eea;
         }
         
         .kpi-label {
-            font-size: 12px;
+            font-size: 11px;
             text-transform: uppercase;
             color: #999;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
             letter-spacing: 0.5px;
         }
         
         .kpi-value {
-            font-size: 32px;
+            font-size: 24px;
             font-weight: bold;
             color: #333;
         }
         
         .kpi-subtext {
-            font-size: 12px;
+            font-size: 11px;
             color: #999;
-            margin-top: 8px;
-        }
-        
-        .otif-traffic {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            margin-top: 15px;
+            margin-top: 5px;
         }
         
         .traffic-light {
-            width: 40px;
-            height: 40px;
+            width: 30px;
+            height: 30px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 11px;
+            margin-top: 8px;
         }
         
-        .traffic-green {
-            background: #4caf50;
-        }
-        
-        .traffic-orange {
-            background: #ff9800;
-        }
-        
-        .traffic-red {
-            background: #f44336;
-        }
-        
-        .charts-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
+        .traffic-green { background: #4caf50; }
+        .traffic-orange { background: #ff9800; }
+        .traffic-red { background: #f44336; }
         
         .chart-container {
             background: white;
-            padding: 20px;
+            padding: 15px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             position: relative;
-            height: 400px;
+            height: 300px;
         }
         
         .chart-title {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: bold;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             color: #333;
         }
         
         .table-container {
             background: white;
-            padding: 20px;
+            padding: 15px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             overflow-x: auto;
-            margin-bottom: 30px;
+            max-height: 400px;
+            overflow-y: auto;
         }
         
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 13px;
+            font-size: 12px;
         }
         
         th {
             background: #f5f5f5;
-            padding: 12px;
+            padding: 8px;
             text-align: left;
             font-weight: 600;
             border-bottom: 2px solid #ddd;
             color: #333;
+            position: sticky;
+            top: 0;
         }
         
         td {
-            padding: 12px;
+            padding: 8px;
             border-bottom: 1px solid #eee;
         }
         
@@ -204,128 +213,179 @@
         
         .status-badge {
             display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-size: 11px;
             font-weight: 600;
         }
         
-        .status-enviado {
-            background: #c8e6c9;
-            color: #2e7d32;
-        }
-        
-        .status-pendiente {
-            background: #ffe0b2;
-            color: #e65100;
-        }
-        
-        .status-entregado {
-            background: #a5d6a7;
-            color: #1b5e20;
-        }
-        
-        .otif-ok {
-            background: #4caf50;
-            color: white;
-        }
-        
-        .otif-fail {
-            background: #f44336;
-            color: white;
-        }
+        .status-enviado { background: #c8e6c9; color: #2e7d32; }
+        .status-pendiente { background: #ffe0b2; color: #e65100; }
+        .status-entregado { background: #a5d6a7; color: #1b5e20; }
+        .otif-ok { background: #4caf50; color: white; }
+        .otif-fail { background: #f44336; color: white; }
         
         .loading {
             text-align: center;
-            padding: 40px;
-            font-size: 16px;
+            padding: 20px;
+            font-size: 14px;
             color: #666;
         }
         
         .error {
             background: #ffebee;
             color: #c62828;
-            padding: 15px;
+            padding: 10px;
             border-radius: 6px;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
+            font-size: 12px;
         }
         
         .last-update {
-            font-size: 12px;
+            font-size: 11px;
             color: #999;
-            margin-top: 10px;
+            margin-top: 8px;
+        }
+        
+        @media (max-width: 1200px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
+    <div class="header">
+        <h1>📊 Dashboard OTIF - Tráfico SK</h1>
+        <p>Lado Izquierdo: HOY | Lado Derecho: MAÑANA | Datos del Histórico</p>
+    </div>
+    
     <div class="container">
-        <div class="header">
-            <h1>📊 Dashboard OTIF - Tráfico SK</h1>
-            <p>Seguimiento de entregas vs compromisos | Actualización automática cada 2 minutos</p>
-        </div>
-        
-        <div id="error-container"></div>
-        
-        <div class="filters">
-            <div class="filter-group">
-                <label>Filtrar por Estatus:</label>
-                <select id="filterStatus">
+        <!-- PANEL IZQUIERDO - HOY -->
+        <div class="panel">
+            <div class="panel-header hoy">
+                <h2>📅 HOY</h2>
+                <p id="dateHoy"></p>
+            </div>
+            
+            <div id="error-hoy" class="filters"></div>
+            
+            <div class="filters">
+                <label>Filtrar: </label>
+                <select id="filterStatusHoy" onchange="loadData()">
                     <option value="">Todos</option>
                     <option value="ENVIADO">Enviado</option>
                     <option value="PENDIENTE">Pendiente</option>
                     <option value="ENTREGADO">Entregado</option>
                 </select>
+                <button onclick="loadData()">🔄 Actualizar</button>
             </div>
-            <button onclick="location.reload()">🔄 Actualizar Datos</button>
-        </div>
-        
-        <div class="kpi-grid" id="kpiGrid">
-            <div class="loading">Cargando datos...</div>
-        </div>
-        
-        <div class="charts-grid">
+            
+            <div class="kpi-grid" id="kpiGridHoy">
+                <div class="loading">Cargando...</div>
+            </div>
+            
             <div class="chart-container">
-                <div class="chart-title">OTIF por Estatus</div>
-                <canvas id="otifStatusChart"></canvas>
+                <div class="chart-title">OTIF Hoy</div>
+                <canvas id="otifChartHoy"></canvas>
             </div>
-            <div class="chart-container">
-                <div class="chart-title">Entregas por Causa de Cambio</div>
-                <canvas id="causaChart"></canvas>
+            
+            <div class="table-container">
+                <table id="tableHoy">
+                    <thead>
+                        <tr>
+                            <th>Pedido</th>
+                            <th>Cliente</th>
+                            <th>Est.</th>
+                            <th>OTIF</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyHoy">
+                        <tr><td colspan="4" class="loading">Cargando...</td></tr>
+                    </tbody>
+                </table>
+                <div class="last-update" id="updateHoy"></div>
             </div>
         </div>
         
-        <div class="table-container">
-            <div class="chart-title">Listado Detallado de Entregas</div>
-            <table id="dataTable">
-                <thead>
-                    <tr>
-                        <th>Fecha Lista</th>
-                        <th>Pedido</th>
-                        <th>Cliente</th>
-                        <th>Piezas</th>
-                        <th>Peso (kg)</th>
-                        <th>Fecha Entrega</th>
-                        <th>Estatus</th>
-                        <th>OTIF</th>
-                        <th>Causa Cambio</th>
-                        <th>Días Retraso</th>
-                    </tr>
-                </thead>
-                <tbody id="tableBody">
-                    <tr><td colspan="10" class="loading">Cargando datos...</td></tr>
-                </tbody>
-            </table>
-            <div class="last-update" id="lastUpdate"></div>
+        <!-- PANEL DERECHO - MAÑANA -->
+        <div class="panel">
+            <div class="panel-header manana">
+                <h2>📅 MAÑANA</h2>
+                <p id="dateManana"></p>
+            </div>
+            
+            <div id="error-manana" class="filters"></div>
+            
+            <div class="filters">
+                <label>Filtrar: </label>
+                <select id="filterStatusManana" onchange="loadData()">
+                    <option value="">Todos</option>
+                    <option value="ENVIADO">Enviado</option>
+                    <option value="PENDIENTE">Pendiente</option>
+                    <option value="ENTREGADO">Entregado</option>
+                </select>
+                <button onclick="loadData()">🔄 Actualizar</button>
+            </div>
+            
+            <div class="kpi-grid" id="kpiGridManana">
+                <div class="loading">Cargando...</div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">OTIF Mañana</div>
+                <canvas id="otifChartManana"></canvas>
+            </div>
+            
+            <div class="table-container">
+                <table id="tableManana">
+                    <thead>
+                        <tr>
+                            <th>Pedido</th>
+                            <th>Cliente</th>
+                            <th>Est.</th>
+                            <th>OTIF</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bodyManana">
+                        <tr><td colspan="4" class="loading">Cargando...</td></tr>
+                    </tbody>
+                </table>
+                <div class="last-update" id="updateManana"></div>
+            </div>
         </div>
     </div>
     
     <script>
-    let chartOtifStatus = null;
-    let chartCausa = null;
+    let chartHoy = null;
+    let chartManana = null;
+    
     const SHEET_ID = '1E5m71oNT1dTU4GDzhj4fXTobRt3t35nEFhnKsQCtAJ8';
     const GID_HISTORICO = '192857481';
+    const CSV_HISTORICO = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID_HISTORICO}`;
     
-    const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID_HISTORICO}`;
+    function getTodayString() {
+        const today = new Date();
+        const day = String(today.getDate()).padStart(2, '0');
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const year = today.getFullYear();
+        return `${day}/${month}/${year}`;
+    }
+    
+    function getTomorrowString() {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const day = String(tomorrow.getDate()).padStart(2, '0');
+        const month = String(tomorrow.getMonth() + 1).padStart(2, '0');
+        const year = tomorrow.getFullYear();
+        return `${day}/${month}/${year}`;
+    }
+    
+    function formatDateDisplay(dateStr) {
+        const [day, month, year] = dateStr.split('/');
+        const date = new Date(year, month - 1, day);
+        return date.toLocaleDateString('es-MX', { weekday: 'long', month: 'long', day: 'numeric' });
+    }
     
     function parseDate(dateStr) {
         if (!dateStr) return null;
@@ -348,18 +408,9 @@
         return entrega <= lista ? 'OK' : 'FAIL';
     }
     
-    function calculateDiasRetraso(fechaLista, fechaEntrega) {
-        const lista = parseDate(fechaLista);
-        const entrega = parseDate(fechaEntrega);
-        if (!lista || !entrega) return 0;
-        const diffTime = entrega - lista;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays;
-    }
-    
-    async function loadData() {
+    async function loadCsvData(csvUrl) {
         try {
-            const response = await fetch(CSV_URL);
+            const response = await fetch(csvUrl);
             const text = await response.text();
             const rows = text.split('\n').map(row => {
                 const cells = [];
@@ -380,10 +431,7 @@
                 return cells;
             });
             
-            if (rows.length < 2) {
-                showError('No hay datos disponibles en el sheet');
-                return;
-            }
+            if (rows.length < 2) return [];
             
             const headers = rows[0].map(h => h.replace(/"/g, ''));
             const data = [];
@@ -396,79 +444,69 @@
                 }
                 data.push(row);
             }
-            
-            renderDashboard(data);
-            document.getElementById('lastUpdate').textContent = `Última actualización: ${new Date().toLocaleString('es-MX')}`;
+            return data;
         } catch (error) {
-            showError('Error cargando datos: ' + error.message);
-            console.error(error);
+            console.error('Error:', error);
+            return [];
         }
     }
     
-    function showError(msg) {
-        document.getElementById('error-container').innerHTML = `<div class="error">⚠️ ${msg}</div>`;
-    }
-    
-    function renderDashboard(allData) {
-        const filterStatus = document.getElementById('filterStatus').value;
-        const data = filterStatus 
-            ? allData.filter(row => row['ESTATUS']?.toUpperCase().includes(filterStatus))
-            : allData;
+    function renderPanel(side, data) {
+        const filterKey = side === 'Hoy' ? 'filterStatusHoy' : 'filterStatusManana';
+        const filterStatus = document.getElementById(filterKey).value;
+        const filtered = filterStatus 
+            ? data.filter(row => row['ESTATUS']?.toUpperCase().includes(filterStatus))
+            : data;
         
-        if (data.length === 0) {
-            document.getElementById('tableBody').innerHTML = '<tr><td colspan="10">No hay datos para este filtro</td></tr>';
+        const errorDiv = side === 'Hoy' ? 'error-hoy' : 'error-manana';
+        const bodyId = side === 'Hoy' ? 'bodyHoy' : 'bodyManana';
+        const kpiGridId = side === 'Hoy' ? 'kpiGridHoy' : 'kpiGridManana';
+        const updateId = side === 'Hoy' ? 'updateHoy' : 'updateManana';
+        const chartId = side === 'Hoy' ? 'otifChartHoy' : 'otifChartManana';
+        
+        if (filtered.length === 0) {
+            document.getElementById(bodyId).innerHTML = '<tr><td colspan="4" class="loading">Sin entregas</td></tr>';
+            renderKpis(side, []);
             return;
         }
         
         // KPIs
-        const total = data.length;
-        const entregados = data.filter(r => r['ESTATUS']?.toUpperCase().includes('ENTREGADO')).length;
-        const otifOK = data.filter(r => calculateOTIF(r['Fecha nueva'] || r['FECHA DE LISTA'], r['FECHA DE']) === 'OK').length;
+        const total = filtered.length;
+        const entregados = filtered.filter(r => r['ESTATUS']?.toUpperCase().includes('ENTREGADO')).length;
+        const otifOK = filtered.filter(r => calculateOTIF(r['Fecha nueva'] || r['FECHA DE LISTA'], r['FECHA DE']) === 'OK').length;
         const otifPercent = total > 0 ? Math.round((otifOK / total) * 100) : 0;
         
-        // Traffic light
         let trafficClass = 'traffic-red';
         if (otifPercent >= 95) trafficClass = 'traffic-green';
         else if (otifPercent >= 90) trafficClass = 'traffic-orange';
         
-        document.getElementById('kpiGrid').innerHTML = `
+        document.getElementById(kpiGridId).innerHTML = `
             <div class="kpi-card">
-                <div class="kpi-label">Total Pedidos</div>
+                <div class="kpi-label">Pedidos</div>
                 <div class="kpi-value">${total}</div>
-                <div class="kpi-subtext">En el período</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-label">Entregados</div>
                 <div class="kpi-value">${entregados}</div>
-                <div class="kpi-subtext">${((entregados/total)*100).toFixed(1)}% completado</div>
+                <div class="kpi-subtext">${total > 0 ? ((entregados/total)*100).toFixed(0) : 0}%</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-label">OTIF (%)</div>
+                <div class="kpi-label">OTIF</div>
                 <div class="kpi-value">${otifPercent}%</div>
-                <div class="otif-traffic">
-                    <div class="traffic-light ${trafficClass}">${otifOK}/${total}</div>
-                    <div class="kpi-subtext">
-                        ${otifPercent >= 95 ? '✅ Excelente' : otifPercent >= 90 ? '⚠️ Bueno' : '❌ Crítico'}
-                    </div>
-                </div>
+                <div class="traffic-light ${trafficClass}">${otifPercent >= 95 ? '✅' : otifPercent >= 90 ? '⚠️' : '❌'}</div>
             </div>
             <div class="kpi-card">
                 <div class="kpi-label">Retrasos</div>
                 <div class="kpi-value">${total - otifOK}</div>
-                <div class="kpi-subtext">${((1 - otifOK/total)*100).toFixed(1)}% con falta OTIF</div>
             </div>
         `;
         
-        // Charts
-        renderCharts(data);
-        
         // Table
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = data.map(row => {
+        const tbody = document.getElementById(bodyId);
+        tbody.innerHTML = filtered.map(row => {
             const fechaLista = row['Fecha nueva'] || row['FECHA DE LISTA'];
             const fechaEntrega = row['FECHA DE'];
             const otif = calculateOTIF(fechaLista, fechaEntrega);
-            const diasRetraso = calculateDiasRetraso(fechaLista, fechaEntrega);
             const estatus = row['ESTATUS']?.toUpperCase() || '';
             
             let estatusClass = 'status-pendiente';
@@ -477,81 +515,40 @@
             
             return `
                 <tr>
-                    <td>${fechaLista}</td>
                     <td><strong>${row['PEDIDO'] || '-'}</strong></td>
-                    <td>${row['CLIENTE'] || '-'}</td>
-                    <td>${row['PIEZAS'] || '-'}</td>
-                    <td>${row['PESO'] || '-'}</td>
-                    <td>${fechaEntrega || '-'}</td>
-                    <td><span class="status-badge ${estatusClass}">${estatus || '-'}</span></td>
-                    <td><span class="status-badge ${otif === 'OK' ? 'otif-ok' : 'otif-fail'}">${otif === 'OK' ? '✅ OK' : '❌ FAIL'}</span></td>
-                    <td>${row['Causa del c'] || '-'}</td>
-                    <td>${diasRetraso} día${diasRetraso !== 1 ? 's' : ''}</td>
+                    <td>${row['CLIENTE'] ? row['CLIENTE'].substring(0, 15) : '-'}</td>
+                    <td><span class="status-badge ${estatusClass}">${estatus.substring(0, 3)}</span></td>
+                    <td><span class="status-badge ${otif === 'OK' ? 'otif-ok' : 'otif-fail'}">${otif === 'OK' ? '✅' : '❌'}</span></td>
                 </tr>
             `;
         }).join('');
+        
+        // Chart
+        renderChart(side, filtered, chartId);
+        
+        document.getElementById(updateId).textContent = `Actualizado: ${new Date().toLocaleTimeString('es-MX')}`;
     }
     
-    function renderCharts(data) {
-        // OTIF por Estatus
-        const statusOtif = {};
+    function renderChart(side, data, chartId) {
+        const otifCounts = { 'OK': 0, 'FAIL': 0 };
         data.forEach(row => {
-            const estatus = row['ESTATUS']?.toUpperCase() || 'DESCONOCIDO';
-            if (!statusOtif[estatus]) statusOtif[estatus] = { ok: 0, fail: 0 };
             const otif = calculateOTIF(row['Fecha nueva'] || row['FECHA DE LISTA'], row['FECHA DE']);
-            if (otif === 'OK') statusOtif[estatus].ok++;
-            else statusOtif[estatus].fail++;
+            if (otif === 'OK') otifCounts['OK']++;
+            else otifCounts['FAIL']++;
         });
         
-        const statusLabels = Object.keys(statusOtif);
-        const statusOkData = statusLabels.map(s => statusOtif[s].ok);
-        const statusFailData = statusLabels.map(s => statusOtif[s].fail);
+        const ctx = document.getElementById(chartId).getContext('2d');
+        const chart = side === 'Hoy' ? chartHoy : chartManana;
         
-        const ctxStatus = document.getElementById('otifStatusChart').getContext('2d');
-        if (chartOtifStatus) chartOtifStatus.destroy();
-        chartOtifStatus = new Chart(ctxStatus, {
-            type: 'bar',
-            data: {
-                labels: statusLabels,
-                datasets: [
-                    {
-                        label: 'OTIF OK',
-                        data: statusOkData,
-                        backgroundColor: '#4caf50'
-                    },
-                    {
-                        label: 'OTIF FAIL',
-                        data: statusFailData,
-                        backgroundColor: '#f44336'
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } }
-            }
-        });
+        if (chart) chart.destroy();
         
-        // Causa de Cambio
-        const causaCounts = {};
-        data.forEach(row => {
-            const causa = row['Causa del c'] || 'Sin causa';
-            causaCounts[causa] = (causaCounts[causa] || 0) + 1;
-        });
-        
-        const causaLabels = Object.keys(causaCounts);
-        const causaData = causaLabels.map(c => causaCounts[c]);
-        
-        const ctxCausa = document.getElementById('causaChart').getContext('2d');
-        if (chartCausa) chartCausa.destroy();
-        chartCausa = new Chart(ctxCausa, {
+        const newChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: causaLabels,
+                labels: ['OK', 'FAIL'],
                 datasets: [{
-                    data: causaData,
-                    backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#00f2fe', '#ff6b6b', '#ffa502']
+                    data: [otifCounts['OK'], otifCounts['FAIL']],
+                    backgroundColor: ['#4caf50', '#f44336']
                 }]
             },
             options: {
@@ -560,13 +557,83 @@
                 plugins: { legend: { position: 'bottom' } }
             }
         });
+        
+        if (side === 'Hoy') chartHoy = newChart;
+        else chartManana = newChart;
     }
     
-    document.getElementById('filterStatus').addEventListener('change', () => {
-        loadData();
-    });
+    function renderKpis(side, data) {
+        const total = data.length;
+        const entregados = data.filter(r => r['ESTATUS']?.toUpperCase().includes('ENTREGADO')).length;
+        const otifOK = data.filter(r => calculateOTIF(r['Fecha nueva'] || r['FECHA DE LISTA'], r['FECHA DE']) === 'OK').length;
+        const otifPercent = total > 0 ? Math.round((otifOK / total) * 100) : 0;
+        
+        let trafficClass = 'traffic-red';
+        if (otifPercent >= 95) trafficClass = 'traffic-green';
+        else if (otifPercent >= 90) trafficClass = 'traffic-orange';
+        
+        const kpiGridId = side === 'Hoy' ? 'kpiGridHoy' : 'kpiGridManana';
+        
+        document.getElementById(kpiGridId).innerHTML = `
+            <div class="kpi-card">
+                <div class="kpi-label">Pedidos</div>
+                <div class="kpi-value">${total}</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Entregados</div>
+                <div class="kpi-value">${entregados}</div>
+                <div class="kpi-subtext">${total > 0 ? ((entregados/total)*100).toFixed(0) : 0}%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">OTIF</div>
+                <div class="kpi-value">${otifPercent}%</div>
+                <div class="traffic-light ${trafficClass}">${otifPercent >= 95 ? '✅' : otifPercent >= 90 ? '⚠️' : '❌'}</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Retrasos</div>
+                <div class="kpi-value">${total - otifOK}</div>
+            </div>
+        `;
+    }
     
-    // Cargar datos al iniciar
+    async function loadData() {
+        const dataHistorico = await loadCsvData(CSV_HISTORICO);
+        
+        const today = getTodayString();
+        const tomorrow = getTomorrowString();
+        
+        // Mostrar fechas
+        document.getElementById('dateHoy').textContent = formatDateDisplay(today);
+        document.getElementById('dateManana').textContent = formatDateDisplay(tomorrow);
+        
+        // Filtrar por fecha de entrega
+        const dataHoy = dataHistorico.filter(row => {
+            const fechaEntrega = row['FECHA DE'];
+            return fechaEntrega && fechaEntrega.includes(today.split('/')[0]) && fechaEntrega.includes(today.split('/')[1]);
+        });
+        
+        const dataMañana = dataHistorico.filter(row => {
+            const fechaEntrega = row['FECHA DE'];
+            return fechaEntrega && fechaEntrega.includes(tomorrow.split('/')[0]) && fechaEntrega.includes(tomorrow.split('/')[1]);
+        });
+        
+        if (dataHoy.length === 0) {
+            document.getElementById('error-hoy').innerHTML = '<div class="error">ℹ️ Sin entregas programadas para hoy</div>';
+        } else {
+            document.getElementById('error-hoy').innerHTML = '';
+        }
+        
+        if (dataMañana.length === 0) {
+            document.getElementById('error-manana').innerHTML = '<div class="error">ℹ️ Sin entregas programadas para mañana</div>';
+        } else {
+            document.getElementById('error-manana').innerHTML = '';
+        }
+        
+        renderPanel('Hoy', dataHoy);
+        renderPanel('Manana', dataMañana);
+    }
+    
+    // Cargar al iniciar
     loadData();
     
     // Auto-refresh cada 2 minutos
