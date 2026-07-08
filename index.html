@@ -175,7 +175,7 @@ footer.dash-footer{ text-align:center; font-size:.7rem; color:#9aa5b5; padding:1
     <div class="table-responsive">
       <table class="table data-table mb-0">
         <thead><tr>
-          <th>Pedido</th><th>Cliente</th><th>Fecha lista</th><th>Estado</th><th>Días atraso</th><th>Depto involucrado</th><th>Motivo</th>
+          <th>Pedido</th><th>Cliente</th><th>Símbolo</th><th>Piezas</th><th>Peso (ton)</th><th>Fecha lista</th><th>Estado</th><th>Días atraso</th><th>Depto involucrado</th><th>Motivo</th>
         </tr></thead>
         <tbody id="tablaAtrasos"></tbody>
       </table>
@@ -562,7 +562,8 @@ function renderTablaAtrasos(rows){
   document.getElementById('emptyAtrasos').style.display = rows.length ? 'none' : 'block';
   body.innerHTML = rows.map(r=>`
     <tr>
-      <td>${r.pedido}</td><td>${r.cliente||'—'}</td><td>${fmtFecha(parseFecha(r.fechaLista))}</td>
+      <td>${r.pedido}</td><td>${r.cliente||'—'}</td><td>${r.simbolo||'—'}</td><td>${r.piezas||0}</td><td>${parseNum(r.peso)}</td>
+      <td>${fmtFecha(parseFecha(r.fechaLista))}</td>
       <td>${r._estado}</td><td>${r._diasAtraso}</td><td>${r.depto||'—'}</td><td>${r.motivo||'—'}</td>
     </tr>`).join('');
 }
