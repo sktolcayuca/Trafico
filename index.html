@@ -146,7 +146,7 @@ footer.dash-footer{ text-align:center; font-size:.7rem; color:#9aa5b5; padding:1
       <table class="table data-table mb-0">
         <thead><tr>
           <th>Pedido</th><th>Cliente</th><th>Símbolo</th><th>Piezas</th><th>Peso (ton)</th><th>Tipo</th>
-          <th>Estatus mañana</th><th>Estatus tarde</th><th>Entrega</th><th>Depto implicado</th><th>OTIF</th><th>Observaciones</th>
+          <th>Estatus mañana</th><th>Estatus tarde</th><th>Entrega</th><th>Depto implicado</th><th>Observaciones</th>
         </tr></thead>
         <tbody id="tablaDia1"></tbody>
       </table>
@@ -521,6 +521,14 @@ function fila(cols, bg){
   return '<tr>' + cols.map(c=>`<td${style}>${c}</td>`).join('') + '</tr>';
 }
 
+function iconEntregaOTIF(row){
+  const st = estadoOTIF(row); // ya combina On Time + completo
+  if(st === 'pend') return '<span style="color:#b7bfcc">—</span>';
+  return st === 'ok'
+    ? '<i class="fa-solid fa-circle-check" style="color:var(--green)"></i>'
+    : '<i class="fa-solid fa-circle-xmark" style="color:var(--red)"></i>';
+}
+
 function badgeOTIF(row){
   const st = estadoOTIF(row);
   if(st==='ok') return '<span class="badge-otif ok">OTIF</span>';
@@ -533,7 +541,7 @@ function renderTablaDia1(rows){
   document.getElementById('emptyDia1').style.display = rows.length ? 'none' : 'block';
   body.innerHTML = rows.map(r=> fila([
       r.pedido, r.cliente||'—', r.simbolo||'—', r.piezas||0, parseNum(r.peso), r.tipo||'—',
-      r.estatusManana||'—', r.estatusTarde||'—', iconEntrega(r.entrega), r.deptoImplicado||'—', badgeOTIF(r), r.observaciones||'—'
+      r.estatusManana||'—', r.estatusTarde||'—', iconEntregaOTIF(r), r.deptoImplicado||'—', r.observaciones||'—'
     ], colorFilaPorTipo(r))
   ).join('');
 }
