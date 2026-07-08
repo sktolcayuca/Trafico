@@ -71,6 +71,9 @@ body{ background:var(--light-gray); font-family:'Segoe UI', Roboto, Arial, sans-
 .empty-note{ text-align:center; color:#9aa5b5; font-size:.85rem; padding:20px 0; }
 .error-banner{ background:rgba(231,76,60,.1); color:#b93326; border-radius:10px; padding:10px 14px; font-size:.82rem; font-weight:600; margin-bottom:14px; display:none; }
 
+.row-apoyo{ background: rgba(63,169,245,.16) !important; }
+.row-atraso{ background: rgba(255,193,7,.20) !important; }
+
 footer.dash-footer{ text-align:center; font-size:.7rem; color:#9aa5b5; padding:18px 0 30px; }
 </style>
 </head>
@@ -142,8 +145,8 @@ footer.dash-footer{ text-align:center; font-size:.7rem; color:#9aa5b5; padding:1
     <div class="table-responsive">
       <table class="table data-table mb-0">
         <thead><tr>
-          <th>Pedido</th><th>Cliente</th><th>Piezas</th><th>Piezas Ped.</th><th>Peso (ton)</th>
-          <th>Estatus mañana</th><th>Estatus tarde</th><th>Entrega</th><th>On Time</th><th>OTIF</th>
+          <th>Pedido</th><th>Cliente</th><th>Piezas</th><th>Peso (ton)</th><th>Símbolo</th>
+          <th>Estatus mañana</th><th>Estatus tarde</th><th>Entrega</th><th>OTIF</th>
         </tr></thead>
         <tbody id="tablaDia1"></tbody>
       </table>
@@ -157,7 +160,7 @@ footer.dash-footer{ text-align:center; font-size:.7rem; color:#9aa5b5; padding:1
     <div class="table-responsive">
       <table class="table data-table mb-0">
         <thead><tr>
-          <th>Pedido</th><th>Cliente</th><th>Piezas</th><th>Piezas Ped.</th><th>Peso (ton)</th>
+          <th>Pedido</th><th>Cliente</th><th>Piezas</th><th>Peso (ton)</th><th>Símbolo</th>
           <th>Estatus mañana</th><th>Estatus tarde</th><th>Entrega</th>
         </tr></thead>
         <tbody id="tablaDia2"></tbody>
@@ -249,6 +252,7 @@ const HEADER_MAP = {
   'estatus manana': 'estatusManana',
   'estatus tarde': 'estatusTarde',
   'entrega': 'entrega',
+  'tipo': 'tipo',
   'observaciones': 'observaciones',
   'depto involucrado': 'depto',
   'motivo del atraso': 'motivo'
@@ -496,6 +500,13 @@ function renderAtrasoDeptoChart(atrasos){
   if(atrasoDeptoChart){ atrasoDeptoChart.data=cfg.data; atrasoDeptoChart.update(); } else { atrasoDeptoChart = new Chart(document.getElementById('atrasoDeptoChart'), cfg); }
 }
 
+function claseFilaPorTipo(row){
+  const t = normalize(row.tipo);
+  if(t === 'apoyo') return 'row-apoyo';
+  if(t === 'atraso') return 'row-atraso';
+  return '';
+}
+
 function badgeOTIF(row){
   const st = estadoOTIF(row);
   if(st==='ok') return '<span class="badge-otif ok">OTIF</span>';
@@ -507,10 +518,11 @@ function renderTablaDia1(rows){
   const body = document.getElementById('tablaDia1');
   document.getElementById('emptyDia1').style.display = rows.length ? 'none' : 'block';
   body.innerHTML = rows.map(r=>`
-    <tr>
-      <td>${r.pedido}</td><td>${r.cliente||'—'}</td><td>${r.piezas||0}</td><td>${r.piezasPedido||'—'}</td>
-      <td>${parseNum(r.peso)}</td><td>${r.estatusManana||'—'}</td><td>${r.estatusTarde||'—'}</td>
-      <td>${r.entrega||'—'}</td><td>${!r.entrega?'—':(esOnTime(r)?'Sí':'No')}</td><td>${badgeOTIF(r)}</td>
+    <tr class="${claseFilaPorTipo(r)}">
+      <td>${r.pedido}</td><td>${r.cliente||'—'}</td><td>${r.piezas||0}</td>
+      <td>${parseNum(r.peso)}</td><td>${r.simbolo||'—'}</td>
+      <td>${r.estatusManana||'—'}</td><td>${r.estatusTarde||'—'}</td>
+      <td>${r.entrega||'—'}</td><td>${badgeOTIF(r)}</td>
     </tr>`).join('');
 }
 
@@ -518,9 +530,10 @@ function renderTablaDia2(rows){
   const body = document.getElementById('tablaDia2');
   document.getElementById('emptyDia2').style.display = rows.length ? 'none' : 'block';
   body.innerHTML = rows.map(r=>`
-    <tr>
-      <td>${r.pedido}</td><td>${r.cliente||'—'}</td><td>${r.piezas||0}</td><td>${r.piezasPedido||'—'}</td>
-      <td>${parseNum(r.peso)}</td><td>${r.estatusManana||'—'}</td><td>${r.estatusTarde||'—'}</td><td>${r.entrega||'—'}</td>
+    <tr class="${claseFilaPorTipo(r)}">
+      <td>${r.pedido}</td><td>${r.cliente||'—'}</td><td>${r.piezas||0}</td>
+      <td>${parseNum(r.peso)}</td><td>${r.simbolo||'—'}</td>
+      <td>${r.estatusManana||'—'}</td><td>${r.estatusTarde||'—'}</td><td>${r.entrega||'—'}</td>
     </tr>`).join('');
 }
 
