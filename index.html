@@ -331,8 +331,9 @@ function esOnTime(row){
 
 function estadoOTIF(row){
   // 'ok' | 'fail' | 'pend'
-  const tieneEntrega = !!row.fechaEntrega;
-  if(!tieneEntrega) return 'pend';
+  // el campo "Entrega" es la señal real de que ya se intentó/realizó la entrega,
+  // no la presencia de fecha en F.entrega (que a veces se precapturan de antemano).
+  if(!row.entrega) return 'pend';
   const onTime = esOnTime(row);
   const completo = esCompleto(row.entrega);
   return (onTime && completo) ? 'ok' : 'fail';
@@ -513,7 +514,7 @@ function renderTablaDia1(rows){
     <tr>
       <td>${r.pedido}</td><td>${r.cliente||'—'}</td><td>${r.piezas||0}</td><td>${r.piezasPedido||'—'}</td>
       <td>${parseNum(r.peso)}</td><td>${r.estatusManana||'—'}</td><td>${r.estatusTarde||'—'}</td>
-      <td>${r.entrega||'—'}</td><td>${esOnTime(r)?'Sí':(r.fechaEntrega?'No':'—')}</td><td>${badgeOTIF(r)}</td>
+      <td>${r.entrega||'—'}</td><td>${!r.entrega?'—':(esOnTime(r)?'Sí':'No')}</td><td>${badgeOTIF(r)}</td>
     </tr>`).join('');
 }
 
