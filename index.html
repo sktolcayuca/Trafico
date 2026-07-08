@@ -146,7 +146,7 @@ footer.dash-footer{ text-align:center; font-size:.7rem; color:#9aa5b5; padding:1
       <table class="table data-table mb-0">
         <thead><tr>
           <th>Pedido</th><th>Cliente</th><th>Símbolo</th><th>Piezas</th><th>Peso (ton)</th><th>Tipo</th>
-          <th>Estatus mañana</th><th>Estatus tarde</th><th>Entrega</th><th>OTIF</th>
+          <th>Estatus mañana</th><th>Estatus tarde</th><th>Entrega</th><th>Depto implicado</th><th>OTIF</th><th>Observaciones</th>
         </tr></thead>
         <tbody id="tablaDia1"></tbody>
       </table>
@@ -161,7 +161,7 @@ footer.dash-footer{ text-align:center; font-size:.7rem; color:#9aa5b5; padding:1
       <table class="table data-table mb-0">
         <thead><tr>
           <th>Pedido</th><th>Cliente</th><th>Símbolo</th><th>Piezas</th><th>Peso (ton)</th><th>Tipo</th>
-          <th>Estatus mañana</th><th>Estatus tarde</th><th>Entrega</th>
+          <th>Estatus mañana</th><th>Estatus tarde</th><th>Entrega</th><th>Depto implicado</th><th>Observaciones</th>
         </tr></thead>
         <tbody id="tablaDia2"></tbody>
       </table>
@@ -253,6 +253,7 @@ const HEADER_MAP = {
   'estatus tarde': 'estatusTarde',
   'entrega': 'entrega',
   'tipo': 'tipo',
+  'depto implicado': 'deptoImplicado',
   'observaciones': 'observaciones',
   'depto involucrado': 'depto',
   'motivo del atraso': 'motivo'
@@ -324,6 +325,7 @@ function esCompleto(entregaStr){
   if(e.includes('dentro')) return true;    // Dentro del +/-
   if(e.includes('parcial')) return false;  // Parcial
   if(e.includes('devoluc')) return false;  // Devolución
+  if(e.includes('detenid')) return false;  // Detenido
   return false; // vacío / otro valor -> aún no se puede dar por cumplido
 }
 
@@ -531,7 +533,7 @@ function renderTablaDia1(rows){
   document.getElementById('emptyDia1').style.display = rows.length ? 'none' : 'block';
   body.innerHTML = rows.map(r=> fila([
       r.pedido, r.cliente||'—', r.simbolo||'—', r.piezas||0, parseNum(r.peso), r.tipo||'—',
-      r.estatusManana||'—', r.estatusTarde||'—', iconEntrega(r.entrega), badgeOTIF(r)
+      r.estatusManana||'—', r.estatusTarde||'—', iconEntrega(r.entrega), r.deptoImplicado||'—', badgeOTIF(r), r.observaciones||'—'
     ], colorFilaPorTipo(r))
   ).join('');
 }
@@ -541,7 +543,7 @@ function renderTablaDia2(rows){
   document.getElementById('emptyDia2').style.display = rows.length ? 'none' : 'block';
   body.innerHTML = rows.map(r=> fila([
       r.pedido, r.cliente||'—', r.simbolo||'—', r.piezas||0, parseNum(r.peso), r.tipo||'—',
-      r.estatusManana||'—', r.estatusTarde||'—', iconEntrega(r.entrega)
+      r.estatusManana||'—', r.estatusTarde||'—', iconEntrega(r.entrega), r.deptoImplicado||'—', r.observaciones||'—'
     ], colorFilaPorTipo(r))
   ).join('');
 }
