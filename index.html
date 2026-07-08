@@ -408,32 +408,34 @@ function renderDashboard(){
   const totalDia1 = rowsDia1.length;
   const otifConteo = totalDia1 ? Math.round((okCount/totalDia1)*100) : 0;
   const otifTonelaje = pesoTotal>0 ? Math.round((pesoOk/pesoTotal)*100) : 0;
-  const pendientesHoy = pendCount;
 
-  // ---- atrasos abiertos: sigue abierto si no hay F.entrega, o si F.entrega es hoy o futura.
-  // solo se considera resuelto (y sale de la lista) cuando F.entrega ya quedó en el pasado.
+  // ---- atrasos abiertos: sigue abierto mientras Entrega no sea Completa / dentro del ±.
+  // la fecha de F.entrega aquí es solo el COMPROMISO vigente, no una confirmación de resuelto.
   const hoy = new Date(); hoy.setHours(0,0,0,0);
-  const atrasosAbiertos = ATRASOS_ROWS.filter(r=>{
-    const fe = parseFecha(r.fechaEntrega);
-    if(!fe) return true;             // sin fecha compromiso -> sigue abierto
-    return fe.getTime() >= hoy.getTime(); // hoy o futuro -> sigue abierto
-  });
+  const atrasosAbiertos = ATRASOS_ROWS.filter(r=> !esCompleto(r.entrega));
   atrasosAbiertos.forEach(r=>{
     const fl = parseFecha(r.fechaLista);
     const fe = parseFecha(r.fechaEntrega);
     if(fl && fe){
-      // días atraso = cuánto se corrió la promesa (nueva F.entrega - Fecha lista original)
-      r._diasAtraso = Math.max(0, Math.round((fe - fl)/86400000));
-      r._estado = sameDay(fe, hoy) ? 'Se entrega hoy' : ('Compromiso: ' + fmtFecha(fe));
+      r._diasAtraso = Math.max(0, Math.round((fe - fl)/86400000)); // cuánto se corrió la promesa
+      if(fe.getTime() < hoy.getTime()) r._estado = 'Venció compromiso (' + fmtFecha(fe) + ')';
+      else if(sameDay(fe, hoy)) r._estado = 'Se entrega hoy';
+      else r._estado = 'Compromiso: ' + fmtFecha(fe);
     } else if(fl){
-      // aún sin fecha compromiso -> días que lleva esperando
-      r._diasAtraso = Math.max(0, Math.round((hoy - fl)/86400000));
+      r._diasAtraso = Math.max(0, Math.round((hoy - fl)/86400000)); // días esperando sin promesa nueva
       r._estado = 'Sin fecha compromiso';
     } else {
       r._diasAtraso = 0;
       r._estado = '—';
     }
   });
+  // "pendientes hoy" de Atrasos = los que urgen hoy: sin fecha, vencidos, o comprometidos para hoy.
+  // los comprometidos a futuro (ej. viernes) no cuentan aquí, ya están agendados más adelante.
+  const atrasosUrgentesHoy = atrasosAbiertos.filter(r=>{
+    const fe = parseFecha(r.fechaEntrega);
+    return !fe || fe.getTime() <= hoy.getTime();
+  });
+  const pendientesHoy = pendCount + atrasosUrgentesHoy.length;
 
   // ---- KPI CARDS ----
   const kpis = [
