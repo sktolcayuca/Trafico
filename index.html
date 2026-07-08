@@ -432,11 +432,7 @@ function renderDashboard(){
   });
   // "pendientes hoy" de Atrasos = los que urgen hoy: sin fecha, vencidos, o comprometidos para hoy.
   // los comprometidos a futuro (ej. viernes) no cuentan aquí, ya están agendados más adelante.
-  const atrasosUrgentesHoy = atrasosAbiertos.filter(r=>{
-    const fe = parseFecha(r.fechaEntrega);
-    return !fe || fe.getTime() <= hoy.getTime();
-  });
-  const pendientesHoy = pendCount + atrasosUrgentesHoy.length;
+  const pendientesHoy = pendCount;
 
   // ---- KPI CARDS ----
   const kpis = [
