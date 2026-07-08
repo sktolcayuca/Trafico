@@ -145,7 +145,7 @@ footer.dash-footer{ text-align:center; font-size:.7rem; color:#9aa5b5; padding:1
     <div class="table-responsive">
       <table class="table data-table mb-0">
         <thead><tr>
-          <th>Pedido</th><th>Cliente</th><th>Piezas</th><th>Peso (ton)</th><th>Símbolo</th>
+          <th>Pedido</th><th>Cliente</th><th>Símbolo</th><th>Piezas</th><th>Peso (ton)</th><th>Tipo</th>
           <th>Estatus mañana</th><th>Estatus tarde</th><th>Entrega</th><th>OTIF</th>
         </tr></thead>
         <tbody id="tablaDia1"></tbody>
@@ -160,7 +160,7 @@ footer.dash-footer{ text-align:center; font-size:.7rem; color:#9aa5b5; padding:1
     <div class="table-responsive">
       <table class="table data-table mb-0">
         <thead><tr>
-          <th>Pedido</th><th>Cliente</th><th>Piezas</th><th>Peso (ton)</th><th>Símbolo</th>
+          <th>Pedido</th><th>Cliente</th><th>Símbolo</th><th>Piezas</th><th>Peso (ton)</th><th>Tipo</th>
           <th>Estatus mañana</th><th>Estatus tarde</th><th>Entrega</th>
         </tr></thead>
         <tbody id="tablaDia2"></tbody>
@@ -519,8 +519,8 @@ function renderTablaDia1(rows){
   document.getElementById('emptyDia1').style.display = rows.length ? 'none' : 'block';
   body.innerHTML = rows.map(r=>`
     <tr class="${claseFilaPorTipo(r)}">
-      <td>${r.pedido}</td><td>${r.cliente||'—'}</td><td>${r.piezas||0}</td>
-      <td>${parseNum(r.peso)}</td><td>${r.simbolo||'—'}</td>
+      <td>${r.pedido}</td><td>${r.cliente||'—'}</td><td>${r.simbolo||'—'}</td>
+      <td>${r.piezas||0}</td><td>${parseNum(r.peso)}</td><td>${r.tipo||'—'}</td>
       <td>${r.estatusManana||'—'}</td><td>${r.estatusTarde||'—'}</td>
       <td>${r.entrega||'—'}</td><td>${badgeOTIF(r)}</td>
     </tr>`).join('');
@@ -531,8 +531,8 @@ function renderTablaDia2(rows){
   document.getElementById('emptyDia2').style.display = rows.length ? 'none' : 'block';
   body.innerHTML = rows.map(r=>`
     <tr class="${claseFilaPorTipo(r)}">
-      <td>${r.pedido}</td><td>${r.cliente||'—'}</td><td>${r.piezas||0}</td>
-      <td>${parseNum(r.peso)}</td><td>${r.simbolo||'—'}</td>
+      <td>${r.pedido}</td><td>${r.cliente||'—'}</td><td>${r.simbolo||'—'}</td>
+      <td>${r.piezas||0}</td><td>${parseNum(r.peso)}</td><td>${r.tipo||'—'}</td>
       <td>${r.estatusManana||'—'}</td><td>${r.estatusTarde||'—'}</td><td>${r.entrega||'—'}</td>
     </tr>`).join('');
 }
