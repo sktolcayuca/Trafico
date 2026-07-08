@@ -413,7 +413,10 @@ function renderDashboard(){
   let pesoTotal=0, pesoOk=0;
   rowsDia1.forEach(r=>{
     const st = estadoOTIF(r);
-    if(st==='ok') okCount++; else if(st==='fail') failCount++; else pendCount++;
+    if(st==='ok') okCount++; else failCount++;
+    // "pendiente" para el KPI = aún no sale de la planta: sin marcar Entrega, o Detenido.
+    const eNorm = normEntrega(r.entrega);
+    if(!r.entrega || eNorm.includes('detenid')) pendCount++;
     const peso = parseNum(r.peso);
     pesoTotal += peso;
     if(st==='ok') pesoOk += peso;
