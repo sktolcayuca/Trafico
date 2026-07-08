@@ -160,8 +160,8 @@ footer.dash-footer{ text-align:center; font-size:.7rem; color:#9aa5b5; padding:1
     <div class="table-responsive">
       <table class="table data-table mb-0">
         <thead><tr>
-          <th>Pedido</th><th>Cliente</th><th>Símbolo</th><th>Piezas</th><th>Peso (ton)</th><th>Tipo</th>
-          <th>Estatus mañana</th><th>Estatus tarde</th><th>Entrega</th><th>Depto implicado</th><th>Observaciones</th>
+          <th>Pedido</th><th>Cliente</th><th>Símbolo</th><th>Piezas</th><th>Peso (ton)</th>
+          <th>Estatus</th><th>Observaciones</th>
         </tr></thead>
         <tbody id="tablaDia2"></tbody>
       </table>
@@ -196,7 +196,8 @@ const PLANTAS_CONFIG = {
   SK: {
     sheetId: '1YffDN35RzYP3W-CkMd9HnRGCUDr8YxA5IoOXcyi_YMY',
     gidDiario: '0',
-    gidAtrasos: '1719704144'
+    gidAtrasos: '1719704144',
+    gidSigDia: '1156833206'
   }
 };
 const PLANTA_ACTIVA = 'SK';
@@ -251,6 +252,7 @@ const HEADER_MAP = {
   'peso': 'peso',
   'estatus manana': 'estatusManana',
   'estatus tarde': 'estatusTarde',
+  'estatus': 'estatus',
   'entrega': 'entrega',
   'tipo': 'tipo',
   'depto implicado': 'deptoImplicado',
@@ -358,21 +360,14 @@ function estadoOTIF(row){
    ============================================================ */
 function calcularVentanaDias(rowsDiario){
   const hoy = new Date(); hoy.setHours(0,0,0,0);
-  const fechasConDatos = [...new Set(
-    rowsDiario.map(r=> parseFecha(r.fechaLista)).filter(Boolean).map(d=>d.getTime())
-  )].sort((a,b)=>a-b);
-
-  const futuras = fechasConDatos.filter(t => t > hoy.getTime());
-  const dia2 = futuras.length ? new Date(futuras[0]) : null;
-
-  return { dia1: hoy, dia2 };
+  return { dia1: hoy };
 }
 
 /* ============================================================
    FETCH + ORQUESTADOR
    ============================================================ */
 let gaugeChart, compareChart, atrasoDeptoChart;
-let DIARIO_ROWS = [], ATRASOS_ROWS = [];
+let DIARIO_ROWS = [], ATRASOS_ROWS = [], SIGDIA_ROWS = [];
 
 async function fetchTexto(url){
   const res = await fetch(url, {cache:'no-store'});
@@ -386,12 +381,14 @@ async function cargarTodo(){
   document.getElementById('lastUpdate').textContent = 'Actualizando...';
   const cfg = PLANTAS_CONFIG[PLANTA_ACTIVA];
   try{
-    const [txtDiario, txtAtrasos] = await Promise.all([
+    const [txtDiario, txtAtrasos, txtSigDia] = await Promise.all([
       fetchTexto(csvUrl(cfg.sheetId, cfg.gidDiario)),
-      fetchTexto(csvUrl(cfg.sheetId, cfg.gidAtrasos))
+      fetchTexto(csvUrl(cfg.sheetId, cfg.gidAtrasos)),
+      fetchTexto(csvUrl(cfg.sheetId, cfg.gidSigDia))
     ]);
     DIARIO_ROWS = buildRowsFromCSV(parseCSV(txtDiario));
     ATRASOS_ROWS = buildRowsFromCSV(parseCSV(txtAtrasos));
+    SIGDIA_ROWS = buildRowsFromCSV(parseCSV(txtSigDia));
     renderDashboard();
     document.getElementById('lastUpdate').textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-MX');
   }catch(err){
@@ -402,13 +399,14 @@ async function cargarTodo(){
 }
 
 function renderDashboard(){
-  const {dia1, dia2} = calcularVentanaDias(DIARIO_ROWS);
+  const {dia1} = calcularVentanaDias(DIARIO_ROWS);
 
   const rowsDia1 = DIARIO_ROWS.filter(r=> sameDay(parseFecha(r.fechaLista), dia1));
-  const rowsDia2 = dia2 ? DIARIO_ROWS.filter(r=> sameDay(parseFecha(r.fechaLista), dia2)) : [];
+  const rowsDia2 = SIGDIA_ROWS; // pestaña "Sig día" independiente, ya no se filtra por fecha
 
   document.getElementById('tituloDia1').textContent = 'Hoy — ' + fmtFecha(dia1);
-  document.getElementById('tituloDia2').textContent = dia2 ? ('Siguiente día — ' + fmtFecha(dia2)) : 'Siguiente día con datos';
+  const fechaDia2 = rowsDia2.length ? parseFecha(rowsDia2[0].fechaLista) : null;
+  document.getElementById('tituloDia2').textContent = fechaDia2 ? ('Siguiente día — ' + fmtFecha(fechaDia2)) : 'Siguiente día con datos';
 
   // ---- cálculos OTIF día 1 ----
   let okCount=0, failCount=0, pendCount=0;
@@ -550,9 +548,9 @@ function renderTablaDia2(rows){
   const body = document.getElementById('tablaDia2');
   document.getElementById('emptyDia2').style.display = rows.length ? 'none' : 'block';
   body.innerHTML = rows.map(r=> fila([
-      r.pedido, r.cliente||'—', r.simbolo||'—', r.piezas||0, parseNum(r.peso), r.tipo||'—',
-      r.estatusManana||'—', r.estatusTarde||'—', iconEntrega(r.entrega), r.deptoImplicado||'—', r.observaciones||'—'
-    ], colorFilaPorTipo(r))
+      r.pedido, r.cliente||'—', r.simbolo||'—', r.piezas||0, parseNum(r.peso),
+      r.estatus||'—', r.observaciones||'—'
+    ], '')
   ).join('');
 }
 
