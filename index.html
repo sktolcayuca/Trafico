@@ -172,7 +172,7 @@ footer.dash-footer{ text-align:center; font-size:.7rem; color:#9aa5b5; padding:1
     <div class="table-responsive">
       <table class="table data-table mb-0">
         <thead><tr>
-          <th>Pedido</th><th>Cliente</th><th>Fecha lista</th><th>Días atraso</th><th>Depto involucrado</th><th>Motivo</th>
+          <th>Pedido</th><th>Cliente</th><th>Fecha lista</th><th>Estado</th><th>Días atraso</th><th>Depto involucrado</th><th>Motivo</th>
         </tr></thead>
         <tbody id="tablaAtrasos"></tbody>
       </table>
@@ -410,12 +410,29 @@ function renderDashboard(){
   const otifTonelaje = pesoTotal>0 ? Math.round((pesoOk/pesoTotal)*100) : 0;
   const pendientesHoy = pendCount;
 
-  // ---- atrasos abiertos (F. entrega vacía en pestaña Atrasos) ----
-  const atrasosAbiertos = ATRASOS_ROWS.filter(r=> !r.fechaEntrega);
+  // ---- atrasos abiertos: sigue abierto si no hay F.entrega, o si F.entrega es hoy o futura.
+  // solo se considera resuelto (y sale de la lista) cuando F.entrega ya quedó en el pasado.
   const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const atrasosAbiertos = ATRASOS_ROWS.filter(r=>{
+    const fe = parseFecha(r.fechaEntrega);
+    if(!fe) return true;             // sin fecha compromiso -> sigue abierto
+    return fe.getTime() >= hoy.getTime(); // hoy o futuro -> sigue abierto
+  });
   atrasosAbiertos.forEach(r=>{
     const fl = parseFecha(r.fechaLista);
-    r._diasAtraso = fl ? Math.max(0, Math.round((hoy - fl)/86400000)) : 0;
+    const fe = parseFecha(r.fechaEntrega);
+    if(fl && fe){
+      // días atraso = cuánto se corrió la promesa (nueva F.entrega - Fecha lista original)
+      r._diasAtraso = Math.max(0, Math.round((fe - fl)/86400000));
+      r._estado = sameDay(fe, hoy) ? 'Se entrega hoy' : ('Compromiso: ' + fmtFecha(fe));
+    } else if(fl){
+      // aún sin fecha compromiso -> días que lleva esperando
+      r._diasAtraso = Math.max(0, Math.round((hoy - fl)/86400000));
+      r._estado = 'Sin fecha compromiso';
+    } else {
+      r._diasAtraso = 0;
+      r._estado = '—';
+    }
   });
 
   // ---- KPI CARDS ----
@@ -514,7 +531,7 @@ function renderTablaAtrasos(rows){
   body.innerHTML = rows.map(r=>`
     <tr>
       <td>${r.pedido}</td><td>${r.cliente||'—'}</td><td>${fmtFecha(parseFecha(r.fechaLista))}</td>
-      <td>${r._diasAtraso}</td><td>${r.depto||'—'}</td><td>${r.motivo||'—'}</td>
+      <td>${r._estado}</td><td>${r._diasAtraso}</td><td>${r.depto||'—'}</td><td>${r.motivo||'—'}</td>
     </tr>`).join('');
 }
 
