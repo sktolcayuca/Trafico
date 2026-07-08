@@ -500,11 +500,15 @@ function renderAtrasoDeptoChart(atrasos){
   if(atrasoDeptoChart){ atrasoDeptoChart.data=cfg.data; atrasoDeptoChart.update(); } else { atrasoDeptoChart = new Chart(document.getElementById('atrasoDeptoChart'), cfg); }
 }
 
-function claseFilaPorTipo(row){
+function colorFilaPorTipo(row){
   const t = normalize(row.tipo);
-  if(t === 'apoyo') return 'row-apoyo';
-  if(t === 'atraso') return 'row-atraso';
+  if(t === 'apoyo') return 'rgba(63,169,245,.22)';
+  if(t === 'atraso') return 'rgba(255,193,7,.28)';
   return '';
+}
+function fila(cols, bg){
+  const style = bg ? ` style="background:${bg}"` : '';
+  return '<tr>' + cols.map(c=>`<td${style}>${c}</td>`).join('') + '</tr>';
 }
 
 function badgeOTIF(row){
@@ -517,24 +521,21 @@ function badgeOTIF(row){
 function renderTablaDia1(rows){
   const body = document.getElementById('tablaDia1');
   document.getElementById('emptyDia1').style.display = rows.length ? 'none' : 'block';
-  body.innerHTML = rows.map(r=>`
-    <tr class="${claseFilaPorTipo(r)}">
-      <td>${r.pedido}</td><td>${r.cliente||'—'}</td><td>${r.simbolo||'—'}</td>
-      <td>${r.piezas||0}</td><td>${parseNum(r.peso)}</td><td>${r.tipo||'—'}</td>
-      <td>${r.estatusManana||'—'}</td><td>${r.estatusTarde||'—'}</td>
-      <td>${r.entrega||'—'}</td><td>${badgeOTIF(r)}</td>
-    </tr>`).join('');
+  body.innerHTML = rows.map(r=> fila([
+      r.pedido, r.cliente||'—', r.simbolo||'—', r.piezas||0, parseNum(r.peso), r.tipo||'—',
+      r.estatusManana||'—', r.estatusTarde||'—', r.entrega||'—', badgeOTIF(r)
+    ], colorFilaPorTipo(r))
+  ).join('');
 }
 
 function renderTablaDia2(rows){
   const body = document.getElementById('tablaDia2');
   document.getElementById('emptyDia2').style.display = rows.length ? 'none' : 'block';
-  body.innerHTML = rows.map(r=>`
-    <tr class="${claseFilaPorTipo(r)}">
-      <td>${r.pedido}</td><td>${r.cliente||'—'}</td><td>${r.simbolo||'—'}</td>
-      <td>${r.piezas||0}</td><td>${parseNum(r.peso)}</td><td>${r.tipo||'—'}</td>
-      <td>${r.estatusManana||'—'}</td><td>${r.estatusTarde||'—'}</td><td>${r.entrega||'—'}</td>
-    </tr>`).join('');
+  body.innerHTML = rows.map(r=> fila([
+      r.pedido, r.cliente||'—', r.simbolo||'—', r.piezas||0, parseNum(r.peso), r.tipo||'—',
+      r.estatusManana||'—', r.estatusTarde||'—', r.entrega||'—'
+    ], colorFilaPorTipo(r))
+  ).join('');
 }
 
 function renderTablaAtrasos(rows){
