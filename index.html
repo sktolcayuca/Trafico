@@ -320,10 +320,18 @@ function normEntrega(str){ return normalize(str); }
    ============================================================ */
 function esCompleto(entregaStr){
   const e = normEntrega(entregaStr);
-  if(e.includes('parcial')) return false;
-  if(e.includes('completa')) return true;
-  if(e.includes('dentro')) return true; // "dentro del +/-" cuenta como cumplido
+  if(e.includes('complet')) return true;   // Completada
+  if(e.includes('dentro')) return true;    // Dentro del +/-
+  if(e.includes('parcial')) return false;  // Parcial
+  if(e.includes('devoluc')) return false;  // Devolución
   return false; // vacío / otro valor -> aún no se puede dar por cumplido
+}
+
+function iconEntrega(raw){
+  if(!raw) return '<span style="color:#b7bfcc">—</span>';
+  return esCompleto(raw)
+    ? '<i class="fa-solid fa-circle-check" style="color:var(--green)"></i>'
+    : '<i class="fa-solid fa-circle-xmark" style="color:var(--red)"></i>';
 }
 
 function esOnTime(row){
@@ -523,7 +531,7 @@ function renderTablaDia1(rows){
   document.getElementById('emptyDia1').style.display = rows.length ? 'none' : 'block';
   body.innerHTML = rows.map(r=> fila([
       r.pedido, r.cliente||'—', r.simbolo||'—', r.piezas||0, parseNum(r.peso), r.tipo||'—',
-      r.estatusManana||'—', r.estatusTarde||'—', r.entrega||'—', badgeOTIF(r)
+      r.estatusManana||'—', r.estatusTarde||'—', iconEntrega(r.entrega), badgeOTIF(r)
     ], colorFilaPorTipo(r))
   ).join('');
 }
@@ -533,7 +541,7 @@ function renderTablaDia2(rows){
   document.getElementById('emptyDia2').style.display = rows.length ? 'none' : 'block';
   body.innerHTML = rows.map(r=> fila([
       r.pedido, r.cliente||'—', r.simbolo||'—', r.piezas||0, parseNum(r.peso), r.tipo||'—',
-      r.estatusManana||'—', r.estatusTarde||'—', r.entrega||'—'
+      r.estatusManana||'—', r.estatusTarde||'—', iconEntrega(r.entrega)
     ], colorFilaPorTipo(r))
   ).join('');
 }
