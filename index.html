@@ -615,7 +615,8 @@ function calcularHistoricoDesdeSheet(rows){
     const d = porDia[key];
     out[key] = {
       conteo: d.total ? Math.round((d.ok/d.total)*100) : null,
-      tonelaje: d.pesoTotal>0 ? Math.round((d.pesoOk/d.pesoTotal)*100) : null
+      tonelaje: d.pesoTotal>0 ? Math.round((d.pesoOk/d.pesoTotal)*100) : null,
+      pesoComprometido: d.pesoTotal
     };
   });
   return out;
@@ -644,26 +645,71 @@ function renderHistoricoChart(){
   const [y, mm] = mesSel.split('-').map(Number);
   const diasEnMes = new Date(y, mm, 0).getDate();
 
+  const hoy = new Date();
+  const esMesActual = (hoy.getFullYear()===y && (hoy.getMonth()+1)===mm);
+  const diaHoyIdx = esMesActual ? (hoy.getDate()-1) : -1; // índice 0-based dentro del arreglo
+
   const labels = [];
   const conteo = [];
   const tonelaje = [];
+  const pesoComprometido = [];
   for(let d=1; d<=diasEnMes; d++){
     const key = y + '-' + String(mm).padStart(2,'0') + '-' + String(d).padStart(2,'0');
     labels.push(d.toString());
-    conteo.push(HISTORICO_ACTUAL[key] ? HISTORICO_ACTUAL[key].conteo : null);
-    tonelaje.push(HISTORICO_ACTUAL[key] ? HISTORICO_ACTUAL[key].tonelaje : null);
+    const reg = HISTORICO_ACTUAL[key];
+    conteo.push(reg ? reg.conteo : null);
+    tonelaje.push(reg ? reg.tonelaje : null);
+    pesoComprometido.push(reg ? reg.pesoComprometido : null);
   }
 
-  const cfg = { type:'line',
-    data:{ labels, datasets:[
-      { label:'OTIF conteo %', data:conteo, borderColor:'#3FA9F5', backgroundColor:'rgba(63,169,245,.12)', spanGaps:false, tension:.3, pointRadius:3 },
-      { label:'OTIF tonelaje %', data:tonelaje, borderColor:'#1F3A5F', backgroundColor:'rgba(31,58,95,.10)', spanGaps:false, tension:.3, pointRadius:3 },
-      { label:'Meta 95%', data:labels.map(()=>95), borderColor:'#00A86B', borderDash:[6,4], pointRadius:0, borderWidth:1.5 }
+  // estilo especial para el punto de "hoy" (el día sigue abierto, el dato es parcial)
+  function estilosPunto(colorBase, dataArr){
+    return dataArr.map((v,i)=>{
+      if(i===diaHoyIdx) return '#fff';       // hueco: relleno blanco
+      return colorBase;
+    });
+  }
+  function radiosPunto(dataArr){
+    return dataArr.map((v,i)=> i===diaHoyIdx ? 6 : 3);
+  }
+  function bordesPunto(dataArr){
+    return dataArr.map((v,i)=> i===diaHoyIdx ? 2.5 : 1);
+  }
+
+  const cfg = { data:{ labels, datasets:[
+      {
+        type:'bar', label:'Ton. comprometidas', data:pesoComprometido, yAxisID:'y1',
+        backgroundColor:'rgba(31,58,95,.14)', borderRadius:4, order:3, maxBarThickness:34
+      },
+      {
+        type:'line', label:'OTIF conteo %', data:conteo, yAxisID:'y', spanGaps:false, tension:.3,
+        borderColor:'#3FA9F5', backgroundColor:'rgba(63,169,245,.10)', order:1,
+        pointBackgroundColor: estilosPunto('#3FA9F5', conteo),
+        pointBorderColor: '#3FA9F5',
+        pointRadius: radiosPunto(conteo),
+        pointBorderWidth: bordesPunto(conteo)
+      },
+      {
+        type:'line', label:'OTIF tonelaje %', data:tonelaje, yAxisID:'y', spanGaps:false, tension:.3,
+        borderColor:'#1F3A5F', backgroundColor:'rgba(31,58,95,.10)', order:2,
+        pointBackgroundColor: estilosPunto('#1F3A5F', tonelaje),
+        pointBorderColor: '#1F3A5F',
+        pointRadius: radiosPunto(tonelaje),
+        pointBorderWidth: bordesPunto(tonelaje)
+      },
+      {
+        type:'line', label:'Meta 95%', data:labels.map(()=>95), yAxisID:'y',
+        borderColor:'#00A86B', borderDash:[6,4], pointRadius:0, borderWidth:1.5, order:0
+      }
     ]},
     options:{ responsive:true, maintainAspectRatio:false,
       plugins:{ legend:{ display:true, position:'bottom', labels:{boxWidth:10, font:{size:10}} } },
-      scales:{ y:{ min:0, max:100, grid:{color:'#eef1f5'} }, x:{ grid:{display:false}, title:{display:true, text:'Día del mes', font:{size:10}} } } } };
-  if(historicoChart){ historicoChart.data=cfg.data; historicoChart.update(); }
+      scales:{
+        y:{ min:0, max:100, position:'left', grid:{color:'#eef1f5'}, title:{display:true, text:'% OTIF', font:{size:10}} },
+        y1:{ min:0, position:'right', grid:{display:false}, title:{display:true, text:'Toneladas', font:{size:10}} },
+        x:{ grid:{display:false}, title:{display:true, text:'Día del mes (◯ = hoy, día en curso)', font:{size:10}} }
+      } } };
+  if(historicoChart){ historicoChart.data=cfg.data; historicoChart.options=cfg.options; historicoChart.update(); }
   else{ historicoChart = new Chart(document.getElementById('historicoChart'), cfg); }
 }
 
