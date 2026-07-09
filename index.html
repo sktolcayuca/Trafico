@@ -139,6 +139,22 @@ footer.dash-footer{ text-align:center; font-size:.7rem; color:#9aa5b5; padding:1
     </div>
   </div>
 
+  <!-- Histórico OTIF del mes -->
+  <div class="row g-3 mt-1">
+    <div class="col-12">
+      <div class="panel">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-1">
+          <div>
+            <div class="panel-title"><i class="fa-solid fa-chart-line"></i>Histórico OTIF del mes</div>
+            <div class="panel-sub">Calculado directo de todo lo que ya tienes registrado en Diario</div>
+          </div>
+          <select id="fMesHistorico" class="form-select form-select-sm" style="width:auto"></select>
+        </div>
+        <div class="chart-box h220"><canvas id="historicoChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Tabla día de corte -->
   <div class="section-title"><i class="fa-solid fa-calendar-day"></i><span id="tituloDia1">Hoy</span></div>
   <div class="panel">
@@ -473,6 +489,11 @@ function renderDashboard(){
   // ---- COMPARATIVO conteo vs tonelaje ----
   renderCompareChart(otifConteo, otifTonelaje);
 
+  // ---- HISTÓRICO OTIF: se calcula de todo lo que ya trae Diario, sin guardar nada aparte ----
+  HISTORICO_ACTUAL = calcularHistoricoDesdeSheet(DIARIO_ROWS);
+  poblarSelectMeses(HISTORICO_ACTUAL);
+  renderHistoricoChart();
+
   // ---- ATRASOS POR DEPTO ----
   renderAtrasoDeptoChart(atrasosAbiertos);
 
@@ -569,6 +590,84 @@ function renderTablaAtrasos(rows){
 }
 
 /* ============================================================
+   HISTÓRICO OTIF — calculado directo de todo lo que ya existe en Diario
+   (no se guarda nada aparte; si el renglón de un día viejo sigue en el
+   Sheet, aquí sale solo, sin importar en qué equipo se abra el dash)
+   ============================================================ */
+const MESES_LARGO = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+function calcularHistoricoDesdeSheet(rows){
+  const porDia = {}; // 'YYYY-MM-DD' -> {ok, total, pesoOk, pesoTotal}
+  rows.forEach(r=>{
+    const fl = parseFecha(r.fechaLista);
+    if(!fl) return;
+    const key = fl.getFullYear()+'-'+String(fl.getMonth()+1).padStart(2,'0')+'-'+String(fl.getDate()).padStart(2,'0');
+    if(!porDia[key]) porDia[key] = {ok:0, total:0, pesoOk:0, pesoTotal:0};
+    const st = estadoOTIF(r);
+    porDia[key].total++;
+    if(st==='ok') porDia[key].ok++;
+    const peso = parseNum(r.peso);
+    porDia[key].pesoTotal += peso;
+    if(st==='ok') porDia[key].pesoOk += peso;
+  });
+  const out = {};
+  Object.keys(porDia).forEach(key=>{
+    const d = porDia[key];
+    out[key] = {
+      conteo: d.total ? Math.round((d.ok/d.total)*100) : null,
+      tonelaje: d.pesoTotal>0 ? Math.round((d.pesoOk/d.pesoTotal)*100) : null
+    };
+  });
+  return out;
+}
+
+function poblarSelectMeses(historico){
+  const sel = document.getElementById('fMesHistorico');
+  const hoy = new Date();
+  const mesActualKey = hoy.getFullYear() + '-' + String(hoy.getMonth()+1).padStart(2,'0');
+  const set = new Set(Object.keys(historico).map(k=> k.slice(0,7)));
+  set.add(mesActualKey);
+  const meses = [...set].sort();
+  const valorPrevio = sel.value;
+  sel.innerHTML = meses.map(m=>{
+    const [y, mm] = m.split('-');
+    return `<option value="${m}">${MESES_LARGO[parseInt(mm,10)-1]} ${y}</option>`;
+  }).join('');
+  sel.value = meses.includes(valorPrevio) ? valorPrevio : mesActualKey;
+}
+
+let historicoChart;
+let HISTORICO_ACTUAL = {};
+function renderHistoricoChart(){
+  const sel = document.getElementById('fMesHistorico');
+  const mesSel = sel.value; // 'YYYY-MM'
+  const [y, mm] = mesSel.split('-').map(Number);
+  const diasEnMes = new Date(y, mm, 0).getDate();
+
+  const labels = [];
+  const conteo = [];
+  const tonelaje = [];
+  for(let d=1; d<=diasEnMes; d++){
+    const key = y + '-' + String(mm).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    labels.push(d.toString());
+    conteo.push(HISTORICO_ACTUAL[key] ? HISTORICO_ACTUAL[key].conteo : null);
+    tonelaje.push(HISTORICO_ACTUAL[key] ? HISTORICO_ACTUAL[key].tonelaje : null);
+  }
+
+  const cfg = { type:'line',
+    data:{ labels, datasets:[
+      { label:'OTIF conteo %', data:conteo, borderColor:'#3FA9F5', backgroundColor:'rgba(63,169,245,.12)', spanGaps:false, tension:.3, pointRadius:3 },
+      { label:'OTIF tonelaje %', data:tonelaje, borderColor:'#1F3A5F', backgroundColor:'rgba(31,58,95,.10)', spanGaps:false, tension:.3, pointRadius:3 },
+      { label:'Meta 95%', data:labels.map(()=>95), borderColor:'#00A86B', borderDash:[6,4], pointRadius:0, borderWidth:1.5 }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:true, position:'bottom', labels:{boxWidth:10, font:{size:10}} } },
+      scales:{ y:{ min:0, max:100, grid:{color:'#eef1f5'} }, x:{ grid:{display:false}, title:{display:true, text:'Día del mes', font:{size:10}} } } } };
+  if(historicoChart){ historicoChart.data=cfg.data; historicoChart.update(); }
+  else{ historicoChart = new Chart(document.getElementById('historicoChart'), cfg); }
+}
+
+/* ============================================================
    RELOJ + INIT
    ============================================================ */
 function tickClock(){
@@ -580,6 +679,7 @@ function tickClock(){
 document.addEventListener('DOMContentLoaded', ()=>{
   tickClock();
   setInterval(tickClock, 1000);
+  document.getElementById('fMesHistorico').addEventListener('change', renderHistoricoChart);
   cargarTodo();
   setInterval(cargarTodo, 5*60*1000); // auto-refresh cada 5 min
 });
