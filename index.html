@@ -106,7 +106,7 @@ footer.dash-footer{ text-align:center; font-size:.7rem; color:#9aa5b5; padding:1
 
   <!-- Gauge + charts -->
   <div class="row g-3 mt-1">
-    <div class="col-lg-3">
+    <div class="col-lg-4">
       <div class="panel h-100">
         <div class="panel-title"><i class="fa-solid fa-gauge-high"></i>OTIF de hoy</div>
         <div class="panel-sub">Por conteo de pedidos</div>
@@ -122,11 +122,19 @@ footer.dash-footer{ text-align:center; font-size:.7rem; color:#9aa5b5; padding:1
       </div>
     </div>
 
-    <div class="col-lg-5">
+    <div class="col-lg-4">
       <div class="panel h-100">
-        <div class="panel-title"><i class="fa-solid fa-scale-balanced"></i>OTIF hoy: conteo vs tonelaje</div>
-        <div class="panel-sub">Un pedido grande que falla pesa distinto que uno chico</div>
-        <div class="chart-box h220"><canvas id="compareChart"></canvas></div>
+        <div class="panel-title"><i class="fa-solid fa-weight-hanging"></i>OTIF de hoy</div>
+        <div class="panel-sub">Por tonelaje (un pedido grande pesa distinto que uno chico)</div>
+        <div class="gauge-wrap">
+          <canvas id="gaugeTonelajeChart"></canvas>
+          <div class="gauge-center-value"><div class="num" id="gaugeTonelajeValue">0%</div><div class="lbl">OTIF</div></div>
+        </div>
+        <div class="gauge-legend">
+          <span><i class="dot" style="background:var(--red)"></i>&lt;85%</span>
+          <span><i class="dot" style="background:var(--yellow)"></i>85-94%</span>
+          <span><i class="dot" style="background:var(--green)"></i>&ge;95%</span>
+        </div>
       </div>
     </div>
 
@@ -386,7 +394,7 @@ function calcularVentanaDias(rowsDiario){
 /* ============================================================
    FETCH + ORQUESTADOR
    ============================================================ */
-let gaugeChart, compareChart, atrasoDeptoChart;
+let gaugeChart, gaugeTonelajeChart, atrasoDeptoChart;
 let DIARIO_ROWS = [], ATRASOS_ROWS = [], SIGDIA_ROWS = [];
 
 async function fetchTexto(url){
@@ -486,11 +494,9 @@ function renderDashboard(){
       </div>
     </div>`).join('');
 
-  // ---- GAUGE ----
+  // ---- GAUGES ----
   renderGauge(otifConteo);
-
-  // ---- COMPARATIVO conteo vs tonelaje ----
-  renderCompareChart(otifConteo, otifTonelaje);
+  renderGaugeTonelaje(otifTonelaje);
 
   // ---- HISTÓRICO OTIF: se calcula de todo lo que ya trae Diario, sin guardar nada aparte ----
   HISTORICO_ACTUAL = calcularHistoricoDesdeSheet(DIARIO_ROWS);
@@ -507,20 +513,20 @@ function renderDashboard(){
 }
 
 function gaugeColor(v){ return v<85?'#E74C3C' : v<95?'#FFC107':'#00A86B'; }
-function renderGauge(value){
-  document.getElementById('gaugeValue').textContent = value+'%';
+function renderGaugeGenerico(canvasId, valueElId, value, chartRefSetter, chartRefGetter){
+  document.getElementById(valueElId).textContent = value+'%';
   const color = gaugeColor(value);
   const cfg = { type:'doughnut', data:{ datasets:[{ data:[value, 100-value], backgroundColor:[color,'#e9edf3'], borderWidth:0, circumference:180, rotation:270, cutout:'75%' }]},
     options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{enabled:false}} } };
-  if(gaugeChart){ gaugeChart.data=cfg.data; gaugeChart.update(); } else { gaugeChart = new Chart(document.getElementById('gaugeChart'), cfg); }
+  const chartActual = chartRefGetter();
+  if(chartActual){ chartActual.data=cfg.data; chartActual.update(); }
+  else{ chartRefSetter(new Chart(document.getElementById(canvasId), cfg)); }
 }
-
-function renderCompareChart(conteo, tonelaje){
-  const cfg = { type:'bar',
-    data:{ labels:['OTIF por conteo','OTIF por tonelaje'], datasets:[{ data:[conteo,tonelaje], backgroundColor:['#3FA9F5','#1F3A5F'], borderRadius:8, maxBarThickness:60 }]},
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
-      scales:{ y:{ min:0, max:100, grid:{color:'#eef1f5'} }, x:{ grid:{display:false} } } } };
-  if(compareChart){ compareChart.data=cfg.data; compareChart.update(); } else { compareChart = new Chart(document.getElementById('compareChart'), cfg); }
+function renderGauge(value){
+  renderGaugeGenerico('gaugeChart','gaugeValue', value, c=>gaugeChart=c, ()=>gaugeChart);
+}
+function renderGaugeTonelaje(value){
+  renderGaugeGenerico('gaugeTonelajeChart','gaugeTonelajeValue', value, c=>gaugeTonelajeChart=c, ()=>gaugeTonelajeChart);
 }
 
 function renderAtrasoDeptoChart(atrasos){
