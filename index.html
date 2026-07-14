@@ -259,6 +259,8 @@ function normalize(s){
 // mapea nombre normalizado de columna -> clave interna
 const HEADER_MAP = {
   'fecha lista': 'fechaLista',
+  'flista': 'fechaLista',
+  'f lista': 'fechaLista',
   'f entrega': 'fechaEntrega',
   'pedido': 'pedido',
   'cliente': 'cliente',
@@ -278,11 +280,13 @@ const HEADER_MAP = {
 };
 
 function buildRowsFromCSV(rows2D){
-  // busca la fila de encabezados (la que contiene "fecha lista" y "pedido")
+  // busca la fila de encabezados: alguna variante de "fecha lista" + "pedido"
+  const variantesFechaLista = ['fecha lista','flista','f lista'];
   let headerRowIdx = -1;
   for(let i=0;i<rows2D.length;i++){
     const norm = rows2D[i].map(normalize);
-    if(norm.includes('fecha lista') && norm.includes('pedido')){ headerRowIdx = i; break; }
+    const tieneFechaLista = norm.some(h=> variantesFechaLista.includes(h));
+    if(tieneFechaLista && norm.includes('pedido')){ headerRowIdx = i; break; }
   }
   if(headerRowIdx === -1) return [];
 
