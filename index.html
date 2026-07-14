@@ -585,10 +585,10 @@ function iconEntregaOTIF(row){
 function iconEstatus(raw){
   if(!raw) return '<span style="color:#b7bfcc">—</span>';
   const e = normalize(raw);
-  if(e.includes('planta')) return `<i class="fa-solid fa-industry" style="color:var(--dark-blue)" title="${raw}"></i> ${raw}`;
-  if(e.includes('embarque')) return `<i class="fa-solid fa-truck" style="color:var(--light-blue)" title="${raw}"></i> ${raw}`;
-  if(e.includes('detenid')) return `<i class="fa-solid fa-hand" style="color:var(--red)" title="${raw}"></i> ${raw}`;
-  if(e.includes('enviad')) return `<i class="fa-solid fa-box" style="color:var(--green)" title="${raw}"></i> ${raw}`;
+  if(e.includes('planta')) return `<i class="fa-solid fa-industry" style="color:var(--dark-blue)" title="${raw}"></i>`;
+  if(e.includes('embarque')) return `<i class="fa-solid fa-truck" style="color:var(--light-blue)" title="${raw}"></i>`;
+  if(e.includes('detenid')) return `<i class="fa-solid fa-hand" style="color:var(--red)" title="${raw}"></i>`;
+  if(e.includes('enviad')) return `<i class="fa-solid fa-box" style="color:var(--green)" title="${raw}"></i>`;
   return raw;
 }
 
@@ -619,15 +619,20 @@ function renderTablaDia2(rows){
   ).join('');
 }
 
+function colorPorDiasAtraso(dias){
+  if(dias > 180) return 'rgba(231,76,60,.20)';   // más de 6 meses -> rojo
+  if(dias > 90) return 'rgba(255,193,7,.22)';    // entre 3 y 6 meses -> amarillo
+  return '';                                      // 0 a 3 meses -> sin color
+}
+
 function renderTablaAtrasos(rows){
   const body = document.getElementById('tablaAtrasos');
   document.getElementById('emptyAtrasos').style.display = rows.length ? 'none' : 'block';
-  body.innerHTML = rows.map(r=>`
-    <tr>
-      <td>${r.pedido}</td><td>${r.cliente||'—'}</td><td>${r.simbolo||'—'}</td><td>${r.piezas||0}</td><td>${parseNum(r.peso)}</td>
-      <td>${fmtFecha(parseFecha(r.fechaLista))}</td>
-      <td>${r._estado}</td><td>${r._diasAtraso}</td><td>${r.depto||'—'}</td><td>${r.motivo||'—'}</td>
-    </tr>`).join('');
+  body.innerHTML = rows.map(r=> fila([
+      r.pedido, r.cliente||'—', r.simbolo||'—', r.piezas||0, parseNum(r.peso),
+      fmtFecha(parseFecha(r.fechaLista)), r._estado, r._diasAtraso, r.depto||'—', r.motivo||'—'
+    ], colorPorDiasAtraso(r._diasAtraso))
+  ).join('');
 }
 
 /* ============================================================
