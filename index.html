@@ -472,14 +472,13 @@ function renderDashboard(){
   // ---- KPI CARDS ----
   const kpis = [
     {label:'Pedidos programados hoy', value: totalDia1, icon:'fa-truck', color:'var(--light-blue)'},
-    {label:'OTIF hoy (conteo)', value: otifConteo+'%', icon:'fa-truck-fast', color: otifConteo>=95?'var(--green)':otifConteo>=85?'var(--yellow)':'var(--red)'},
-    {label:'OTIF hoy (tonelaje)', value: otifTonelaje+'%', icon:'fa-weight-hanging', color: otifTonelaje>=95?'var(--green)':otifTonelaje>=85?'var(--yellow)':'var(--red)'},
+    {label:'Entregas completadas hoy', value: okCount, icon:'fa-circle-check', color:'var(--green)'},
     {label:'Pendientes por entregar hoy', value: pendientesHoy, icon:'fa-hourglass-half', color:'var(--yellow)'},
-    {label:'Atrasos abiertos', value: atrasosAbiertos.length, icon:'fa-triangle-exclamation', color:'var(--red)'},
+    {label:'Pendientes atrasados por entregar', value: atrasosAbiertos.length, icon:'fa-triangle-exclamation', color:'var(--red)'},
     {label:'Programados siguiente día', value: rowsDia2.length, icon:'fa-calendar-plus', color:'var(--dark-blue)'}
   ];
   document.getElementById('kpiRow').innerHTML = kpis.map(k=>`
-    <div class="col-6 col-md-4 col-lg-2">
+    <div class="col-6 col-md-4 col-lg">
       <div class="kpi-card">
         <div class="kpi-icon" style="background:${k.color}"><i class="fa-solid ${k.icon}"></i></div>
         <div class="kpi-label">${k.label}</div>
