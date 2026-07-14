@@ -47,10 +47,12 @@ body{ background:var(--light-gray); font-family:'Segoe UI', Roboto, Arial, sans-
 .chart-box{ position:relative; width:100%; }
 .chart-box.h220{ height:220px; }
 
-.gauge-wrap{ position:relative; height:190px; }
-.gauge-center-value{ position:absolute; top:58%; left:50%; transform:translate(-50%,-50%); text-align:center; }
-.gauge-center-value .num{ font-size:1.9rem; font-weight:800; color:var(--dark-blue); }
-.gauge-center-value .lbl{ font-size:.66rem; color:#8592a6; text-transform:uppercase; font-weight:700; }
+.gauge-wrap{ position:relative; height:150px; }
+.gauge-svg-holder{ width:100%; height:100%; }
+.gauge-svg-holder svg{ width:100%; height:100%; display:block; }
+.gauge-value-below{ text-align:center; margin-top:2px; }
+.gauge-value-below .num{ font-size:1.9rem; font-weight:800; color:var(--dark-blue); }
+.gauge-value-below .lbl{ font-size:.66rem; color:#8592a6; text-transform:uppercase; font-weight:700; }
 .gauge-legend{ display:flex; justify-content:center; gap:14px; margin-top:6px; font-size:.66rem; font-weight:700; color:#8592a6;}
 .gauge-legend span{ display:inline-flex; align-items:center; gap:5px;}
 .dot{ width:9px;height:9px;border-radius:50%; display:inline-block;}
@@ -110,10 +112,8 @@ footer.dash-footer{ text-align:center; font-size:.7rem; color:#9aa5b5; padding:1
       <div class="panel h-100">
         <div class="panel-title"><i class="fa-solid fa-gauge-high"></i>OTIF de hoy</div>
         <div class="panel-sub">Por conteo de pedidos</div>
-        <div class="gauge-wrap">
-          <canvas id="gaugeChart"></canvas>
-          <div class="gauge-center-value"><div class="num" id="gaugeValue">0%</div><div class="lbl">OTIF</div></div>
-        </div>
+        <div class="gauge-wrap"><div id="gaugeChart" class="gauge-svg-holder"></div></div>
+        <div class="gauge-value-below"><span class="num" id="gaugeValue">0%</span><div class="lbl">OTIF</div></div>
         <div class="gauge-legend">
           <span><i class="dot" style="background:var(--red)"></i>&lt;85%</span>
           <span><i class="dot" style="background:var(--yellow)"></i>85-94%</span>
@@ -126,10 +126,8 @@ footer.dash-footer{ text-align:center; font-size:.7rem; color:#9aa5b5; padding:1
       <div class="panel h-100">
         <div class="panel-title"><i class="fa-solid fa-weight-hanging"></i>OTIF de hoy</div>
         <div class="panel-sub">Por tonelaje (un pedido grande pesa distinto que uno chico)</div>
-        <div class="gauge-wrap">
-          <canvas id="gaugeTonelajeChart"></canvas>
-          <div class="gauge-center-value"><div class="num" id="gaugeTonelajeValue">0%</div><div class="lbl">OTIF</div></div>
-        </div>
+        <div class="gauge-wrap"><div id="gaugeTonelajeChart" class="gauge-svg-holder"></div></div>
+        <div class="gauge-value-below"><span class="num" id="gaugeTonelajeValue">0%</span><div class="lbl">OTIF</div></div>
         <div class="gauge-legend">
           <span><i class="dot" style="background:var(--red)"></i>&lt;85%</span>
           <span><i class="dot" style="background:var(--yellow)"></i>85-94%</span>
@@ -394,7 +392,7 @@ function calcularVentanaDias(rowsDiario){
 /* ============================================================
    FETCH + ORQUESTADOR
    ============================================================ */
-let gaugeChart, gaugeTonelajeChart, atrasoDeptoChart;
+let atrasoDeptoChart;
 let DIARIO_ROWS = [], ATRASOS_ROWS = [], SIGDIA_ROWS = [];
 
 async function fetchTexto(url){
@@ -512,22 +510,41 @@ function renderDashboard(){
   renderTablaAtrasos(atrasosAbiertos);
 }
 
-function gaugeColor(v){ return v<85?'#E74C3C' : v<95?'#FFC107':'#00A86B'; }
-function renderGaugeGenerico(canvasId, valueElId, value, chartRefSetter, chartRefGetter){
+function polarToXY(cx, cy, r, angleDeg){
+  const rad = angleDeg * Math.PI/180;
+  return { x: cx + r*Math.cos(rad), y: cy - r*Math.sin(rad) };
+}
+function pctToAngle(p){ return 180 - (Math.max(0,Math.min(100,p))/100)*180; }
+
+function buildGaugeSVG(value){
+  const cx=100, cy=98, rOuter=90, rInner=62;
+  const bandR = (rOuter+rInner)/2;
+  const strokeW = rOuter-rInner;
+  const zonas = [
+    {desde:0, hasta:85, color:'#E74C3C'},
+    {desde:85, hasta:95, color:'#FFC107'},
+    {desde:95, hasta:100, color:'#00A86B'}
+  ];
+  let arcos = '';
+  zonas.forEach(z=>{
+    const a1 = pctToAngle(z.desde);
+    const a2 = pctToAngle(z.hasta);
+    const p1 = polarToXY(cx,cy,bandR,a1);
+    const p2 = polarToXY(cx,cy,bandR,a2);
+    arcos += `<path d="M ${p1.x.toFixed(2)} ${p1.y.toFixed(2)} A ${bandR} ${bandR} 0 0 1 ${p2.x.toFixed(2)} ${p2.y.toFixed(2)}" stroke="${z.color}" stroke-width="${strokeW}" fill="none"/>`;
+  });
+  const anguloAguja = pctToAngle(value);
+  const punta = polarToXY(cx,cy, rInner-6, anguloAguja);
+  const aguja = `<line x1="${cx}" y1="${cy}" x2="${punta.x.toFixed(2)}" y2="${punta.y.toFixed(2)}" stroke="#1F3A5F" stroke-width="4" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="7" fill="#1F3A5F"/>`;
+  return `<svg viewBox="0 0 200 108" xmlns="http://www.w3.org/2000/svg">${arcos}${aguja}</svg>`;
+}
+
+function renderGaugeGenerico(holderId, valueElId, value){
   document.getElementById(valueElId).textContent = value+'%';
-  const color = gaugeColor(value);
-  const cfg = { type:'doughnut', data:{ datasets:[{ data:[value, 100-value], backgroundColor:[color,'#e9edf3'], borderWidth:0, circumference:180, rotation:270, cutout:'75%' }]},
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}, tooltip:{enabled:false}} } };
-  const chartActual = chartRefGetter();
-  if(chartActual){ chartActual.data=cfg.data; chartActual.update(); }
-  else{ chartRefSetter(new Chart(document.getElementById(canvasId), cfg)); }
+  document.getElementById(holderId).innerHTML = buildGaugeSVG(value);
 }
-function renderGauge(value){
-  renderGaugeGenerico('gaugeChart','gaugeValue', value, c=>gaugeChart=c, ()=>gaugeChart);
-}
-function renderGaugeTonelaje(value){
-  renderGaugeGenerico('gaugeTonelajeChart','gaugeTonelajeValue', value, c=>gaugeTonelajeChart=c, ()=>gaugeTonelajeChart);
-}
+function renderGauge(value){ renderGaugeGenerico('gaugeChart','gaugeValue', value); }
+function renderGaugeTonelaje(value){ renderGaugeGenerico('gaugeTonelajeChart','gaugeTonelajeValue', value); }
 
 function renderAtrasoDeptoChart(atrasos){
   // agrupa por cliente, se queda con el peor caso (más días esperando) por cliente
