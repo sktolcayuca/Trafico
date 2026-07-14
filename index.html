@@ -582,6 +582,16 @@ function iconEntregaOTIF(row){
     : '<i class="fa-solid fa-circle-xmark" style="color:var(--red)"></i>';
 }
 
+function iconEstatus(raw){
+  if(!raw) return '<span style="color:#b7bfcc">—</span>';
+  const e = normalize(raw);
+  if(e.includes('planta')) return `<i class="fa-solid fa-industry" style="color:var(--dark-blue)" title="${raw}"></i> ${raw}`;
+  if(e.includes('embarque')) return `<i class="fa-solid fa-truck" style="color:var(--light-blue)" title="${raw}"></i> ${raw}`;
+  if(e.includes('detenid')) return `<i class="fa-solid fa-hand" style="color:var(--red)" title="${raw}"></i> ${raw}`;
+  if(e.includes('enviad')) return `<i class="fa-solid fa-box" style="color:var(--green)" title="${raw}"></i> ${raw}`;
+  return raw;
+}
+
 function badgeOTIF(row){
   const st = estadoOTIF(row);
   if(st==='ok') return '<span class="badge-otif ok">OTIF</span>';
@@ -604,7 +614,7 @@ function renderTablaDia2(rows){
   document.getElementById('emptyDia2').style.display = rows.length ? 'none' : 'block';
   body.innerHTML = rows.map(r=> fila([
       r.pedido, r.cliente||'—', r.simbolo||'—', r.piezas||0, parseNum(r.peso),
-      r.estatus||'—', r.observaciones||'—'
+      iconEstatus(r.estatus), r.observaciones||'—'
     ], '')
   ).join('');
 }
