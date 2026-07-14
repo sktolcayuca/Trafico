@@ -53,6 +53,8 @@ body{ background:var(--light-gray); font-family:'Segoe UI', Roboto, Arial, sans-
 .gauge-value-below{ text-align:center; margin-top:2px; }
 .gauge-value-below .num{ font-size:1.9rem; font-weight:800; color:var(--dark-blue); }
 .gauge-value-below .lbl{ font-size:.66rem; color:#8592a6; text-transform:uppercase; font-weight:700; }
+.gauge-mtd{ text-align:center; font-size:.75rem; color:var(--dark-blue); margin-top:8px; font-weight:700; }
+.gauge-mtd span{ color:#8592a6; font-weight:600; }
 .gauge-legend{ display:flex; justify-content:center; gap:14px; margin-top:6px; font-size:.66rem; font-weight:700; color:#8592a6;}
 .gauge-legend span{ display:inline-flex; align-items:center; gap:5px;}
 .dot{ width:9px;height:9px;border-radius:50%; display:inline-block;}
@@ -119,6 +121,7 @@ footer.dash-footer{ text-align:center; font-size:.7rem; color:#9aa5b5; padding:1
           <span><i class="dot" style="background:var(--yellow)"></i>85-94%</span>
           <span><i class="dot" style="background:var(--green)"></i>&ge;95%</span>
         </div>
+        <div class="gauge-mtd" id="mtdConteo"></div>
       </div>
     </div>
 
@@ -133,6 +136,7 @@ footer.dash-footer{ text-align:center; font-size:.7rem; color:#9aa5b5; padding:1
           <span><i class="dot" style="background:var(--yellow)"></i>85-94%</span>
           <span><i class="dot" style="background:var(--green)"></i>&ge;95%</span>
         </div>
+        <div class="gauge-mtd" id="mtdTonelaje"></div>
       </div>
     </div>
 
@@ -496,6 +500,14 @@ function renderDashboard(){
   renderGauge(otifConteo);
   renderGaugeTonelaje(otifTonelaje);
 
+  // ---- OTIF acumulado del mes (hasta hoy) ----
+  const mtd = calcularOTIFAcumuladoMes(DIARIO_ROWS);
+  const nombreMesHoy = MESES_LARGO[hoy.getMonth()];
+  document.getElementById('mtdConteo').innerHTML = mtd.conteo!==null
+    ? `Acumulado ${nombreMesHoy}: <span>${mtd.conteo}%</span>` : '';
+  document.getElementById('mtdTonelaje').innerHTML = mtd.tonelaje!==null
+    ? `Acumulado ${nombreMesHoy}: <span>${mtd.tonelaje}%</span>` : '';
+
   // ---- HISTÓRICO OTIF: se calcula de todo lo que ya trae Diario, sin guardar nada aparte ----
   HISTORICO_ACTUAL = calcularHistoricoDesdeSheet(DIARIO_ROWS);
   poblarSelectMeses(HISTORICO_ACTUAL);
@@ -633,6 +645,26 @@ function renderTablaAtrasos(rows){
       fmtFecha(parseFecha(r.fechaLista)), r._estado, r._diasAtraso, r.depto||'—', r.motivo||'—'
     ], colorPorDiasAtraso(r._diasAtraso))
   ).join('');
+}
+
+function calcularOTIFAcumuladoMes(rows){
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  let ok=0, total=0, pesoOk=0, pesoTotal=0;
+  rows.forEach(r=>{
+    const fl = parseFecha(r.fechaLista);
+    if(!fl || fl.getTime() < inicioMes.getTime() || fl.getTime() > hoy.getTime()) return;
+    const st = estadoOTIF(r);
+    total++;
+    if(st==='ok') ok++;
+    const peso = parseNum(r.peso);
+    pesoTotal += peso;
+    if(st==='ok') pesoOk += peso;
+  });
+  return {
+    conteo: total ? Math.round((ok/total)*100) : null,
+    tonelaje: pesoTotal>0 ? Math.round((pesoOk/pesoTotal)*100) : null
+  };
 }
 
 /* ============================================================
