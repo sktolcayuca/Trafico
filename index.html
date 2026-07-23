@@ -165,6 +165,17 @@ footer.dash-footer{ text-align:center; font-size:.7rem; color:#9aa5b5; padding:1
     </div>
   </div>
 
+  <!-- Por qué está bajo el OTIF del mes -->
+  <div class="row g-3 mt-1">
+    <div class="col-12">
+      <div class="panel">
+        <div class="panel-title"><i class="fa-solid fa-magnifying-glass-chart"></i>¿Quién está fallando este mes?</div>
+        <div class="panel-sub">% de pedidos NO OTIF acumulados este mes, por depto implicado</div>
+        <div class="chart-box h220"><canvas id="fallosDeptoChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Tabla día de corte -->
   <div class="section-title"><i class="fa-solid fa-calendar-day"></i><span id="tituloDia1">Hoy</span></div>
   <div class="panel">
@@ -508,6 +519,9 @@ function renderDashboard(){
   document.getElementById('mtdTonelaje').innerHTML = mtd.tonelaje!==null
     ? `Acumulado ${nombreMesHoy}: <span>${mtd.tonelaje}%</span>` : '';
 
+  // ---- ¿Quién está fallando este mes? ----
+  renderFallosDeptoChart(DIARIO_ROWS);
+
   // ---- HISTÓRICO OTIF: se calcula de todo lo que ya trae Diario, sin guardar nada aparte ----
   HISTORICO_ACTUAL = calcularHistoricoDesdeSheet(DIARIO_ROWS);
   poblarSelectMeses(HISTORICO_ACTUAL);
@@ -673,6 +687,37 @@ function calcularOTIFAcumuladoMes(rows){
    Sheet, aquí sale solo, sin importar en qué equipo se abra el dash)
    ============================================================ */
 const MESES_LARGO = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+function calcularFallosPorDeptoMes(rows){
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  const conteo = {};
+  let totalFallos = 0;
+  rows.forEach(r=>{
+    const fl = parseFecha(r.fechaLista);
+    if(!fl || fl.getTime() < inicioMes.getTime() || fl.getTime() > hoy.getTime()) return;
+    if(estadoOTIF(r) !== 'fail') return;
+    const d = r.deptoImplicado || 'Sin definir';
+    conteo[d] = (conteo[d]||0)+1;
+    totalFallos++;
+  });
+  return { conteo, totalFallos };
+}
+
+let fallosDeptoChart;
+function renderFallosDeptoChart(rows){
+  const { conteo, totalFallos } = calcularFallosPorDeptoMes(rows);
+  const entradas = Object.entries(conteo).sort((a,b)=> b[1]-a[1]);
+  const labels = entradas.map(e=>e[0]);
+  const valores = entradas.map(e=> totalFallos ? Math.round((e[1]/totalFallos)*100) : 0);
+  const cfg = { type:'bar',
+    data:{ labels, datasets:[{ data:valores, backgroundColor:'#E74C3C', borderRadius:6 }]},
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false},
+        tooltip:{ callbacks:{ label:(ctx)=> ctx.parsed.x + '% de los incumplimientos (' + entradas[ctx.dataIndex][1] + ' pedidos)' } } },
+      scales:{ x:{ beginAtZero:true, max:100, title:{display:true, text:'% de incumplimientos del mes', font:{size:10}}, grid:{color:'#eef1f5'} }, y:{ grid:{display:false} } } } };
+  if(fallosDeptoChart){ fallosDeptoChart.data=cfg.data; fallosDeptoChart.options=cfg.options; fallosDeptoChart.update(); }
+  else{ fallosDeptoChart = new Chart(document.getElementById('fallosDeptoChart'), cfg); }
+}
 
 function calcularHistoricoDesdeSheet(rows){
   const porDia = {}; // 'YYYY-MM-DD' -> {ok, total, pesoOk, pesoTotal}
